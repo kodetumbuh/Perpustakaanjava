@@ -162,17 +162,17 @@
                 }
             });
 
-//            mnDelete.addActionListener(e -> {
-//                int selectedRow = table.getSelectedRow();
-//                if (selectedRow != -1) {
-//                     int id = (int) table.getValueAt(selectedRow, 0);
-//                     int confirm = JOptionPane.showConfirmDialog(Penerbit.this, "Are you sure you want to delete this category?", "Delete", JOptionPane.YES_NO_OPTION);
-//                     if (confirm == JOptionPane.YES_OPTION) {
-//                         deleteKategori(id);
-//                         loadData();
-//                     }
-//                }
-//            });
+            mnDelete.addActionListener(e -> {
+                int selectedRow = table.getSelectedRow();
+                if (selectedRow != -1) {
+                     int id = (int) table.getValueAt(selectedRow, 0);
+                     int confirm = JOptionPane.showConfirmDialog(User.this, "Are you sure you want to delete this category?", "Delete", JOptionPane.YES_NO_OPTION);
+                     if (confirm == JOptionPane.YES_OPTION) {
+                         deleteKategori(id);
+                         loadData();
+                     }
+                }
+            });
 
             popupMenu.add(mnEdit);
             popupMenu.add(mnDelete);

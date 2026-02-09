@@ -68,7 +68,7 @@
         private String sortOrder = "ASC";
 
         public Rak() {
-            setTitle("Master Penerbit");
+            setTitle("Rak Lemari Buku");
             // Use standard frame setup, user might want maximization, but standard size is safer for now.
             // User had setExtendedState(JFrame.MAXIMIZED_BOTH) in the file I read. I will keep it.
             this.setExtendedState(JFrame.MAXIMIZED_BOTH);

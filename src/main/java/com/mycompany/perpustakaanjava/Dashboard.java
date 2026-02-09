@@ -31,25 +31,64 @@ public class Dashboard extends JFrame {
         JMenuBar menuBar = new JMenuBar();
 
         // Membuat Menu Utama
-        JMenu menuFile = new JMenu("File");
-        JMenu menuData = new JMenu("Data");
-        JMenu menuLaporan = new JMenu("Laporan");
-        JMenu menuPengaturan = new JMenu("Pengaturan");
+        JMenu MenuDataMaster = new JMenu("Master Data");
+        
+        // Menu Kedua
+        JMenu MenuAktifitas = new JMenu("Aktifitas");
+        
+        // Menu Ketiga
+        JMenu MenuLaporan = new JMenu("Laporan");
+        
+        // Menu Keempat
+        JMenu MenuCetak = new JMenu("Cetak");
+        
+        // Menu Kelima
+        JMenu MenuAudit = new JMenu("Audit Perpustakaan");
+        
+        // Menu Keenam
+        JMenu MenuAdminitrasi = new JMenu("Adminitrasi");
+        
+        // Menu Ketujuh
+        JMenu MenuPengaturan = new JMenu("Pengaturan");       
 
-        // Membuat Item untuk Menu File
-        JMenuItem itemProfil = new JMenuItem("Profil User");
-        JMenuItem itemLogout = new JMenuItem("Logout");
-        JMenuItem itemExit = new JMenuItem("Keluar");
-
-        // Menambahkan Shortcut Keyboard (Alt + F4 untuk Keluar)
-        itemExit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, ActionEvent.ALT_MASK));
-
-        // Event Listener (Logika klik)
-        itemExit.addActionListener(e -> System.exit(0));
+        // Membuat Item untuk Menu Master Data
+        JMenuItem itemBuku = new JMenuItem("Buku");
+        JMenuItem itemKategori = new JMenuItem("Kategori");
+        JMenuItem itemPenerbit = new JMenuItem("Penerbit");
+        JMenuItem itemPengarang = new JMenuItem("Pengarang");
+        JMenuItem itemRak = new JMenuItem("Rak Lemari");
+        
+        // Membuat Item untuk menu Aktifitas
+        JMenuItem itemPeminjaman = new JMenuItem("Peminjaman Buku");
+        JMenuItem itemPeminjamanDetail = new JMenuItem("Peminjaman Buku Detail");
+        JMenuItem itemPengembalian = new JMenuItem("Pengembalian");
+        JMenuItem Reservasi = new JMenuItem("Reservasi");
 
         
-        // Logika Menu Items
-        JMenuItem itemKategori = new JMenuItem("Data Kategori");
+        // Membuat Item untuk menu Laporan
+        JMenuItem itemLaporanBulan = new JMenuItem("Peminjaman Buku");
+        JMenuItem itemLaporanPengembalian = new JMenuItem("Pengembalian Buku");
+        JMenuItem itemLaporanBuku = new JMenuItem("Buku");
+        JMenuItem itemLaporanAuditBuku = new JMenuItem("Audit Buku");
+        JMenuItem itemLaporanDenda = new JMenuItem("Audit Buku");
+        
+        // Membuat Item untuk cetak
+        JMenuItem itemCetak = new JMenuItem("Peminjaman Cetak");
+        
+        // Membuat Item untuk menu audit perpustakaan
+        JMenuItem itemAuditBuku = new JMenuItem("Pengembalian Buku");
+        JMenuItem itemAuditUser = new JMenuItem("Buku");
+        JMenuItem itemAuditProperti = new JMenuItem("Audit Buku");
+        
+        // Membuat Item untuk adminitrasi user dan anggota
+        JMenuItem itemAdmnitrasiAnggota = new JMenuItem("Pengembalian Buku");
+        JMenuItem itemAdmnitrasiUser = new JMenuItem("Buku");
+       
+        
+        // Membuat menu pengaturan
+        JMenuItem itemPengaturanTema = new JMenuItem("Tema Windows");
+        JMenuItem itemPengaturanBackup = new JMenuItem("Backup Data");
+
         
         // Event Listener: Buka Kategori
         itemKategori.addActionListener(e -> {
@@ -58,33 +97,45 @@ public class Dashboard extends JFrame {
             frameKategori.setVisible(true);
         });
 
-        // Event Listener: Logout
-        itemLogout.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(this, "Apakah Anda yakin ingin logout?", "Logout", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                this.dispose();
-                new LoginForm().setVisible(true);
-            }
-        });
 
         // Menyusun hirarki menu
-        menuFile.add(itemProfil);
-        menuFile.add(itemLogout);
-        menuFile.addSeparator(); // Garis pemisah
-        menuFile.add(itemExit);
+        MenuDataMaster.add(itemBuku);
+        MenuDataMaster.add(itemKategori);
+        MenuDataMaster.add(itemPenerbit);
+        MenuDataMaster.add(itemPengarang);
+        MenuDataMaster.add(itemRak);
+
+
+        // Menyusun hirarki aktifitas
+        MenuAktifitas.add(itemPeminjaman); 
+        MenuAktifitas.add(itemPeminjamanDetail); 
+        MenuAktifitas.add(itemPengembalian); 
+        MenuAktifitas.add(Reservasi); 
         
-        menuData.add(itemKategori); // Tambahkan item Kategori ke menu Data
+        
+        // Menyusun hirarki laporan
+        MenuLaporan.add(itemLaporanBulan);
+        MenuLaporan.add(itemLaporanPengembalian);
+        MenuLaporan.add(itemLaporanBuku);
+        MenuLaporan.add(itemLaporanAuditBuku);
 
 
         // Memasukkan menu ke bar
-        menuBar.add(menuFile);
-        menuBar.add(menuData);
-        menuBar.add(menuLaporan);
-        menuBar.add(menuPengaturan);
+        menuBar.add(MenuDataMaster);
+        menuBar.add(MenuAktifitas);
+        menuBar.add(MenuLaporan);
+        menuBar.add(MenuAudit);
 
         // Memasang Menu Bar ke Dashboard
         setJMenuBar(menuBar);
     }
 
+    
+    // --- Main Method ---
+        public static void main(String[] args) {
+            SwingUtilities.invokeLater(() -> {
+                new Dashboard().setVisible(true);
+            });
+        }
 
 }

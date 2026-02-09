@@ -20,4 +20,14 @@ Laporan
 Laporan Peminjaman berdasarkan dengan tanggal
 Laporan Pengembalian
 Laporan Buku
+Laporan Denda (tambahan)
 Laporan Integrasi dengan Dynamicreport
+Laporan Audit Buku
+
+Cetak
+Pembuatan Kartu (tambahan)
+
+Audit Perpustakaan
+Buku
+User
+Properti (tambahan)
