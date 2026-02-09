@@ -4,10 +4,22 @@
  */
 package com.mycompany.perpustakaanjava;
 
+import javax.swing.*;
+
+
 /**
  *
  * @author ZEMS
  */
 public class LoginForm {
-    
+    public static void main(String[] args) {
+        
+        JFrame frame = new JFrame("Form Java Swing");
+        frame.setSize(400, 200);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        
+        
+    }
 }

@@ -11,6 +11,8 @@ package com.mycompany.perpustakaanjava;
 public class PerpustakaanJava {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            new LoginForm().setVisible(true);
+        });
     }
 }
