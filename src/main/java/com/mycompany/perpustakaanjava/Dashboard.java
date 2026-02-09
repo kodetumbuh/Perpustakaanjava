@@ -17,11 +17,43 @@ public class Dashboard extends JFrame {
         // 2. Inisialisasi Menu Bar
         initMenuBar();
 
-        // 3. Konten Utama (Placeholder)
-        JPanel mainContent = new JPanel();
-        mainContent.setBackground(new Color(240, 240, 240));
-        mainContent.add(new JLabel("Selamat Datang di Sistem Informasi Perpustakaan"));
-        add(mainContent, BorderLayout.CENTER);
+        // 3. Konten Utama (Wallpaper Full Screen)
+        setContentPane(new BackgroundPanel()); 
+    }
+
+    // --- Inner Class for Background Image ---
+    class BackgroundPanel extends JPanel {
+        private Image backgroundImage;
+
+        public BackgroundPanel() {
+            try {
+                // Mencoba memuat gambar dari classpath
+                java.net.URL imgUrl = getClass().getResource("/com/mycompany/perpustakaanjava/WallpaperHome.jpg");
+                if (imgUrl == null) {
+                    // Coba tanpa path absolut jika di root
+                    imgUrl = getClass().getResource("WallpaperHome.jpg");
+                }
+                
+                if (imgUrl != null) {
+                    backgroundImage = new ImageIcon(imgUrl).getImage();
+                } else {
+                    System.err.println("Gagal memuat gambar: WallpaperHome.jpg tidak ditemukan di classpath.");
+                    // Fallback: Set warna background jika gambar gagal
+                    setBackground(new Color(240, 240, 240)); 
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (backgroundImage != null) {
+                // Menggambar gambar agar memenuhi panel (stretch)
+                g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+            }
+        }
     }
 
     private void initMenuBar() {
