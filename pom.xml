@@ -11,4 +11,36 @@
         <maven.compiler.target>21</maven.compiler.target>
         <exec.mainClass>com.mycompany.perpustakaanjava.PerpustakaanJava</exec.mainClass>
     </properties>
+    <dependencies>
+        <!-- Source: https://mvnrepository.com/artifact/org.mariadb.jdbc/mariadb-java-client -->
+        <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>3.5.6</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/net.sourceforge.dynamicreports/dynamicreports-core -->
+        <dependency>
+            <groupId>net.sourceforge.dynamicreports</groupId>
+            <artifactId>dynamicreports-core</artifactId>
+            <version>6.12.1</version>
+            <scope>compile</scope>
+        </dependency>
+        
+        <!-- JAXB for Java 11+ -->
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+        
+        
+    </dependencies>
 </project>
