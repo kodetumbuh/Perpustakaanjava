@@ -5,20 +5,45 @@
 package com.mycompany.perpustakaanjava;
 
 import javax.swing.*;
-
+import javax.swing.JFrame;
+import net.miginfocom.swing.MigLayout;
 
 /**
  *
  * @author ZEMS
  */
-public class LoginForm {
-    public static void main(String[] args) {
+public class LoginForm extends JFrame {
+    
+    public LoginForm() {
+        setTitle("Login Perpustakaan");
+        setSize(400, 180);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        JFrame frame = new JFrame("Form Java Swing");
-        frame.setSize(400, 200);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        setLayout(new MigLayout("wrap 2, insets 20", "[right][grow]"));
+        
+        add(new JLabel("Username :"));
+        JTextField txtUsername = new JTextField();
+        add(txtUsername, "pushx, growx"); // pushx & growx agar field memenuhi lebar
+
+        add(new JLabel("Password :"));
+        JPasswordField txtPassword = new JPasswordField();
+        add(txtPassword, "pushx, growx");
+        
+        JButton btnLogin = new JButton("Login");
+        JButton btnBatal = new JButton("Batal");
+        
+        // Menambahkan aksi klik pada tombol Login
+        btnLogin.addActionListener(e -> {
+            // 1. Menutup atau menyembunyikan form Login saat ini
+            this.dispose(); 
+
+            // 2. Memanggil dan menampilkan form EmployeeManagement
+            Dashboard empForm = new Dashboard();
+            empForm.setVisible(true);
+        });
+        
+        add(btnLogin, "span 2, split 2, align left, gaptop 10");
+        add(btnBatal);
         
         
     }

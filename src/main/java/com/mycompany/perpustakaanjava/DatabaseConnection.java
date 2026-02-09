@@ -1,4 +1,4 @@
-package com.mycompany.PerpustakaanJava;
+package com.mycompany.perpustakaanjava;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

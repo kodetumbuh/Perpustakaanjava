@@ -1,0 +1,23 @@
+Data Master :
+Buku
+Kategori
+Penerbit
+Pengarang
+Rak
+
+
+Transaksi/Aktivitas
+Peminjaman 
+Peminjaman Detail
+Pengembalian
+Reservasi
+
+Adminitrasi
+User
+Anggota
+
+Laporan
+Laporan Peminjaman berdasarkan dengan tanggal
+Laporan Pengembalian
+Laporan Buku
+Laporan Integrasi dengan Dynamicreport
