@@ -1,456 +1,549 @@
-    package com.mycompany.perpustakaanjava;
+package com.mycompany.perpustakaanjava;
 
-    import net.miginfocom.swing.MigLayout;
+import net.miginfocom.swing.MigLayout;
 
-    import javax.swing.*;
-    import javax.swing.table.DefaultTableModel;
-    import java.awt.event.MouseAdapter;
-    import java.awt.event.MouseEvent;
-    import java.sql.Connection;
-    import java.sql.PreparedStatement;
-    import java.sql.ResultSet;
-    import java.sql.SQLException;
-    import java.util.ArrayList;
-    import java.util.List;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
-    /**
-     * Main application frame for managing Kategori.
-     * Includes both UI logic and Data Access Logic (DAO).
-     */
-    public class PeminjamanDetail extends JFrame {
+/**
+ * Main application frame for managing PeminjamanDetail.
+ * Includes both UI logic and Data Access Logic (DAO).
+ */
+public class PeminjamanDetail extends JFrame {
 
-        // --- Model Class ---
-        public static class KategoriData {
-            private int idKategori;
-            private String kodeKategori;
-            private String namaKategori;
-            private String deskripsi;
+    // --- Model Class ---
+    public static class PeminjamanDetailData {
+        private int idDetail;
+        private int idPeminjaman;
+        private String noPeminjaman; // Display
+        private int idBuku;
+        private String judulBuku; // Display
+        private int qty;
+        private String catatan;
 
-            public KategoriData() {}
+        public PeminjamanDetailData() {}
 
-            public KategoriData(int idKategori, String kodeKategori, String namaKategori, String deskripsi) {
-                this.idKategori = idKategori;
-                this.kodeKategori = kodeKategori;
-                this.namaKategori = namaKategori;
-                this.deskripsi = deskripsi;
-            }
+        public PeminjamanDetailData(int idDetail, int idPeminjaman, String noPeminjaman, int idBuku, String judulBuku, int qty, String catatan) {
+            this.idDetail = idDetail;
+            this.idPeminjaman = idPeminjaman;
+            this.noPeminjaman = noPeminjaman;
+            this.idBuku = idBuku;
+            this.judulBuku = judulBuku;
+            this.qty = qty;
+            this.catatan = catatan;
+        }
 
-            public int getIdKategori() { return idKategori; }
-            public void setIdKategori(int idKategori) { this.idKategori = idKategori; }
-            public String getKodeKategori() { return kodeKategori; }
-            public void setKodeKategori(String kodeKategori) { this.kodeKategori = kodeKategori; }
-            public String getNamaKategori() { return namaKategori; }
-            public void setNamaKategori(String namaKategori) { this.namaKategori = namaKategori; }
-            public String getDeskripsi() { return deskripsi; }
-            public void setDeskripsi(String deskripsi) { this.deskripsi = deskripsi; }
+        public int getIdDetail() { return idDetail; }
+        public void setIdDetail(int idDetail) { this.idDetail = idDetail; }
+        public int getIdPeminjaman() { return idPeminjaman; }
+        public void setIdPeminjaman(int idPeminjaman) { this.idPeminjaman = idPeminjaman; }
+        public String getNoPeminjaman() { return noPeminjaman; }
+        public void setNoPeminjaman(String noPeminjaman) { this.noPeminjaman = noPeminjaman; }
+        public int getIdBuku() { return idBuku; }
+        public void setIdBuku(int idBuku) { this.idBuku = idBuku; }
+        public String getJudulBuku() { return judulBuku; }
+        public void setJudulBuku(String judulBuku) { this.judulBuku = judulBuku; }
+        public int getQty() { return qty; }
+        public void setQty(int qty) { this.qty = qty; }
+        public String getCatatan() { return catatan; }
+        public void setCatatan(String catatan) { this.catatan = catatan; }
 
+        @Override
+        public String toString() { return noPeminjaman + " - " + judulBuku; }
+    }
+
+    // Helper classes for ComboBoxes
+    public static class PeminjamanItem {
+        private int id;
+        private String no;
+        public PeminjamanItem(int id, String no) { this.id = id; this.no = no; }
+        public int getId() { return id; }
+        @Override public String toString() { return no; }
+    }
+
+    public static class BukuItem {
+        private int id;
+        private String judul;
+        public BukuItem(int id, String judul) { this.id = id; this.judul = judul; }
+        public int getId() { return id; }
+        @Override public String toString() { return judul; }
+    }
+
+    // --- UI Logic ---
+    private JTextField txtSearch;
+    private JTable table;
+    private DefaultTableModel tableModel;
+
+    // Pagination UI
+    private JButton btnPrevious;
+    private JButton btnNext;
+    private JComboBox<Integer> cmbPageSize;
+    private JLabel lblPageInfo;
+
+    // Pagination State
+    private int currentPage = 1;
+    private int totalRecords = 0;
+
+    // Sorting State
+    private String sortColumn = "id_detail";
+    private String sortOrder = "ASC";
+
+    public PeminjamanDetail() {
+        setTitle("Master Peminjaman Detail");
+        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        initUI();
+        loadData();
+    }
+
+    private void initUI() {
+        setLayout(new MigLayout("fill, insets 20", "[grow]", "[][grow][]"));
+
+        // === Header / Filter Section ===
+        JPanel pnlHeader = new JPanel(new MigLayout("", "[][grow][]", "[]"));
+        pnlHeader.add(new JLabel("Search (No Peminjaman/Judul Buku):"));
+        txtSearch = new JTextField(20);
+        txtSearch.addActionListener(e -> { currentPage = 1; loadData(); }); // Enter key
+        pnlHeader.add(txtSearch, "growx");
+
+        JButton btnSearch = new JButton("Search");
+        btnSearch.addActionListener(e -> { currentPage = 1; loadData(); });
+        pnlHeader.add(btnSearch);
+
+        JButton btnAdd = new JButton("Add New Detail");
+        btnAdd.addActionListener(e -> showDetailDialog(null));
+        pnlHeader.add(btnAdd, "gapleft 20");
+
+        add(pnlHeader, "wrap, growx");
+
+        // === Table Section ===
+        String[] columnNames = {"ID Detail", "No Peminjaman", "Judul Buku", "Qty", "Catatan"};
+        tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
-            public String toString() { return namaKategori; }
-        }
-
-        // --- UI Logic ---
-        private JTextField txtSearch;
-        private JTable table;
-        private DefaultTableModel tableModel;
-
-        // Pagination UI
-        private JButton btnPrevious;
-        private JButton btnNext;
-        private JComboBox<Integer> cmbPageSize;
-        private JLabel lblPageInfo;
-
-        // Pagination State
-        private int currentPage = 1;
-        private int totalRecords = 0;
-
-        // Sorting State
-        private String sortColumn = "id_kategori";
-        private String sortOrder = "ASC";
-
-        public PeminjamanDetail() {
-            setTitle("Peminjaman Detail");
-            // Use standard frame setup, user might want maximization, but standard size is safer for now.
-            // User had setExtendedState(JFrame.MAXIMIZED_BOTH) in the file I read. I will keep it.
-            this.setExtendedState(JFrame.MAXIMIZED_BOTH);
-            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
-            setLocationRelativeTo(null);
-
-            initUI();
-            loadData();
-        }
-
-        private void initUI() {
-            setLayout(new MigLayout("fill, insets 20", "[grow]", "[][grow][]"));
-
-            // === Header / Filter Section ===
-            JPanel pnlHeader = new JPanel(new MigLayout("", "[][grow][]", "[]"));
-            pnlHeader.add(new JLabel("Search:"));
-            txtSearch = new JTextField(20);
-            txtSearch.addActionListener(e -> { currentPage = 1; loadData(); }); // Enter key
-            pnlHeader.add(txtSearch, "growx");
-
-            JButton btnSearch = new JButton("Search");
-            btnSearch.addActionListener(e -> { currentPage = 1; loadData(); });
-            pnlHeader.add(btnSearch);
-
-            JButton btnAdd = new JButton("Add New Kategori");
-            btnAdd.addActionListener(e -> showKategoriDialog(null));
-            pnlHeader.add(btnAdd, "gapleft 20");
-
-            add(pnlHeader, "wrap, growx");
-
-            // === Table Section ===
-            String[] columnNames = {"ID", "Kode", "Nama Kategori", "Deskripsi"};
-            tableModel = new DefaultTableModel(columnNames, 0) {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-            table = new JTable(tableModel);
-
-            // Sorting Click Handler
-            table.getTableHeader().addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    int col = table.columnAtPoint(e.getPoint());
-                    String[] dbColumns = {"id_kategori", "kode_kategori", "nama_kategori", "deskripsi"};
-
-                    if (col >= 0 && col < dbColumns.length) {
-                        String clickedColumn = dbColumns[col];
-                        if (clickedColumn.equals(sortColumn)) {
-                            sortOrder = sortOrder.equals("ASC") ? "DESC" : "ASC";
-                        } else {
-                            sortColumn = clickedColumn;
-                            sortOrder = "ASC";
-                        }
-                        loadData();
-                    }
-                }
-            });
-
-            // Double click to edit
-            table.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (e.getClickCount() == 2) {
-                        int selectedRow = table.getSelectedRow();
-                        if (selectedRow != -1) {
-                            int id = (int) table.getValueAt(selectedRow, 0);
-                            KategoriData kat = getKategoriById(id);
-                            if (kat != null) {
-                                showKategoriDialog(kat);
-                            }
-                        }
-                    }
-                }
-            });
-
-            // Popup Menu
-            JPopupMenu popupMenu = new JPopupMenu();
-            JMenuItem mnEdit = new JMenuItem("Edit");
-            JMenuItem mnDelete = new JMenuItem("Delete");
-
-            mnEdit.addActionListener(e -> {
-                int selectedRow = table.getSelectedRow();
-                 if (selectedRow != -1) {
-                    int id = (int) table.getValueAt(selectedRow, 0);
-                    KategoriData kat = getKategoriById(id);
-                    if (kat != null) {
-                        showKategoriDialog(kat);
-                    }
-                }
-            });
-
-            mnDelete.addActionListener(e -> {
-                int selectedRow = table.getSelectedRow();
-                if (selectedRow != -1) {
-                     int id = (int) table.getValueAt(selectedRow, 0);
-                     int confirm = JOptionPane.showConfirmDialog(PeminjamanDetail.this, "Are you sure you want to delete this category?", "Delete", JOptionPane.YES_NO_OPTION);
-                     if (confirm == JOptionPane.YES_OPTION) {
-                         deleteKategori(id);
-                         loadData();
-                     }
-                }
-            });
-
-            popupMenu.add(mnEdit);
-            popupMenu.add(mnDelete);
-            table.setComponentPopupMenu(popupMenu);
-
-            add(new JScrollPane(table), "wrap, grow, push");
-
-            // === Pagination Section ===
-            add(createPaginationPanel(), "center");
-        }
-
-        private JPanel createPaginationPanel() {
-            JPanel pnlPagination = new JPanel(new MigLayout("", "[][push][]", "[]"));
-
-            btnPrevious = new JButton("Previous");
-            btnNext = new JButton("Next");
-            Integer[] pageSizes = {25, 50, 100};
-            cmbPageSize = new JComboBox<>(pageSizes);
-            lblPageInfo = new JLabel("Page 1");
-
-            btnPrevious.addActionListener(e -> {
-                currentPage--;
-                loadData();
-            });
-
-            btnNext.addActionListener(e -> {
-                currentPage++;
-                loadData();
-            });
-
-            cmbPageSize.addActionListener(e -> {
-                currentPage = 1;
-                loadData();
-            });
-
-            pnlPagination.add(new JLabel("Rows per page:"));
-            pnlPagination.add(cmbPageSize);
-            pnlPagination.add(lblPageInfo, "gapleft 20");
-            pnlPagination.add(btnPrevious, "gapleft push");
-            pnlPagination.add(btnNext);
-
-            return pnlPagination;
-        }
-
-        private void updatePageInfo(int currentPage, int totalPages, int totalRecords) {
-            lblPageInfo.setText(String.format("Page %d of %d (Total: %d)", currentPage, totalPages, totalRecords));
-
-            btnPrevious.setEnabled(currentPage > 1);
-            btnNext.setEnabled(currentPage < totalPages);
-        }
-
-        private void loadData() {
-            int pageSize = (int) cmbPageSize.getSelectedItem();
-            int offset = (currentPage - 1) * pageSize;
-            String search = txtSearch.getText();
-
-            List<KategoriData> list = getAllKategori(pageSize, offset, sortColumn, sortOrder, search);
-            totalRecords = getKategoriTotalCount(search);
-
-            tableModel.setRowCount(0);
-            for (KategoriData k : list) {
-                tableModel.addRow(new Object[]{
-                    k.getIdKategori(),
-                    k.getKodeKategori(),
-                    k.getNamaKategori(),
-                    k.getDeskripsi()
-                });
+            public boolean isCellEditable(int row, int column) {
+                return false;
             }
+        };
+        table = new JTable(tableModel);
 
-            int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
-            if (totalPages == 0) totalPages = 1;
+        // Sorting Click Handler
+        table.getTableHeader().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int col = table.columnAtPoint(e.getPoint());
+                String[] dbColumns = {"pd.id_detail", "p.no_peminjaman", "b.judul", "pd.qty", "pd.catatan"};
 
-            updatePageInfo(currentPage, totalPages, totalRecords);
-        }
-
-        private void showKategoriDialog(KategoriData kategori) {
-            JDialog dialog = new JDialog(this, kategori == null ? "Add Kategori" : "Edit Kategori", true);
-            dialog.setLayout(new MigLayout("fill, insets 20", "[][grow]", "[]"));
-            dialog.setSize(400, 300);
-            dialog.setLocationRelativeTo(this);
-
-            JTextField txtKode = new JTextField(20);
-            JTextField txtNama = new JTextField(20);
-            JTextField txtDeskripsi = new JTextField(20);
-
-            if (kategori != null) {
-                txtKode.setText(kategori.getKodeKategori());
-                txtNama.setText(kategori.getNamaKategori());
-                txtDeskripsi.setText(kategori.getDeskripsi());
-            }
-
-            dialog.add(new JLabel("Kode Kategori:"));
-            dialog.add(txtKode, "wrap, growx");
-            dialog.add(new JLabel("Nama Kategori:"));
-            dialog.add(txtNama, "wrap, growx");
-            dialog.add(new JLabel("Deskripsi:"));
-            dialog.add(txtDeskripsi, "wrap, growx");
-
-            JCheckBox chkKeepOpen = new JCheckBox("Tetap di form");
-            if (kategori == null) {
-                dialog.add(chkKeepOpen, "wrap");
-            } else {
-                dialog.add(new JLabel(""), "wrap");
-            }
-
-            JButton btnSave = new JButton("Save");
-            btnSave.addActionListener(e -> {
-                String kode = txtKode.getText();
-                String nama = txtNama.getText();
-                String deskripsi = txtDeskripsi.getText();
-
-                KategoriData newKat = new KategoriData(
-                    (kategori == null) ? 0 : kategori.getIdKategori(),
-                    kode,
-                    nama,
-                    deskripsi
-                );
-
-                if (kategori == null) {
-                    saveKategori(newKat);
-                    loadData(); 
-
-                    if (chkKeepOpen.isSelected()) {
-                        txtKode.setText("");
-                        txtNama.setText("");
-                        txtDeskripsi.setText("");
-                        txtKode.requestFocus();
+                if (col >= 0 && col < dbColumns.length) {
+                    String clickedColumn = dbColumns[col];
+                    if (clickedColumn.equals(sortColumn)) {
+                        sortOrder = sortOrder.equals("ASC") ? "DESC" : "ASC";
                     } else {
-                        dialog.dispose();
+                        sortColumn = clickedColumn;
+                        sortOrder = "ASC";
                     }
-                } else {
-                    updateKategori(newKat);
                     loadData();
-                    dialog.dispose();
                 }
+            }
+        });
+
+        // Double click to edit
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int selectedRow = table.getSelectedRow();
+                    if (selectedRow != -1) {
+                        int id = (int) table.getValueAt(selectedRow, 0);
+                        PeminjamanDetailData detail = getDetailById(id);
+                        if (detail != null) {
+                            showDetailDialog(detail);
+                        }
+                    }
+                }
+            }
+        });
+
+        // Popup Menu
+        JPopupMenu popupMenu = new JPopupMenu();
+        JMenuItem mnEdit = new JMenuItem("Edit");
+        JMenuItem mnDelete = new JMenuItem("Delete");
+
+        mnEdit.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow != -1) {
+                int id = (int) table.getValueAt(selectedRow, 0);
+                PeminjamanDetailData detail = getDetailById(id);
+                if (detail != null) {
+                    showDetailDialog(detail);
+                }
+            }
+        });
+
+        mnDelete.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow != -1) {
+                int id = (int) table.getValueAt(selectedRow, 0);
+                int confirm = JOptionPane.showConfirmDialog(PeminjamanDetail.this, "Are you sure you want to delete this detail?", "Delete", JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    deleteDetail(id);
+                    loadData();
+                }
+            }
+        });
+
+        popupMenu.add(mnEdit);
+        popupMenu.add(mnDelete);
+        table.setComponentPopupMenu(popupMenu);
+
+        add(new JScrollPane(table), "wrap, grow, push");
+
+        // === Pagination Section ===
+        add(createPaginationPanel(), "center");
+    }
+
+    private JPanel createPaginationPanel() {
+        JPanel pnlPagination = new JPanel(new MigLayout("", "[][push][]", "[]"));
+
+        btnPrevious = new JButton("Previous");
+        btnNext = new JButton("Next");
+        Integer[] pageSizes = {25, 50, 100};
+        cmbPageSize = new JComboBox<>(pageSizes);
+        lblPageInfo = new JLabel("Page 1");
+
+        btnPrevious.addActionListener(e -> {
+            currentPage--;
+            loadData();
+        });
+
+        btnNext.addActionListener(e -> {
+            currentPage++;
+            loadData();
+        });
+
+        cmbPageSize.addActionListener(e -> {
+            currentPage = 1;
+            loadData();
+        });
+
+        pnlPagination.add(new JLabel("Rows per page:"));
+        pnlPagination.add(cmbPageSize);
+        pnlPagination.add(lblPageInfo, "gapleft 20");
+        pnlPagination.add(btnPrevious, "gapleft push");
+        pnlPagination.add(btnNext);
+
+        return pnlPagination;
+    }
+
+    private void updatePageInfo(int currentPage, int totalPages, int totalRecords) {
+        lblPageInfo.setText(String.format("Page %d of %d (Total: %d)", currentPage, totalPages, totalRecords));
+
+        btnPrevious.setEnabled(currentPage > 1);
+        btnNext.setEnabled(currentPage < totalPages);
+    }
+
+    private void loadData() {
+        int pageSize = (int) cmbPageSize.getSelectedItem();
+        int offset = (currentPage - 1) * pageSize;
+        String search = txtSearch.getText();
+
+        List<PeminjamanDetailData> list = getAllPeminjamanDetail(pageSize, offset, sortColumn, sortOrder, search);
+        totalRecords = getDetailTotalCount(search);
+
+        tableModel.setRowCount(0);
+        for (PeminjamanDetailData d : list) {
+            tableModel.addRow(new Object[]{
+                d.getIdDetail(),
+                d.getNoPeminjaman(),
+                d.getJudulBuku(),
+                d.getQty(),
+                d.getCatatan()
             });
-
-            dialog.add(btnSave, "span, align right");
-            dialog.setVisible(true);
         }
 
-        // =================================== DAO Logic ====================================
+        int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
+        if (totalPages == 0) totalPages = 1;
 
-        private List<KategoriData> getAllKategori(int limit, int offset, String sortColumn, String sortOrder, String searchKeyword) {
-            List<KategoriData> list = new ArrayList<>();
+        updatePageInfo(currentPage, totalPages, totalRecords);
+    }
 
-            if (!sortColumn.matches("id_kategori|kode_kategori|nama_kategori|deskripsi")) {
-                sortColumn = "id_kategori";
-            }
-            if (!sortOrder.equalsIgnoreCase("ASC") && !sortOrder.equalsIgnoreCase("DESC")) {
-                sortOrder = "ASC";
-            }
+    private void showDetailDialog(PeminjamanDetailData detail) {
+        JDialog dialog = new JDialog(this, detail == null ? "Add Detail" : "Edit Detail", true);
+        dialog.setLayout(new MigLayout("fill, insets 20", "[right][grow]", "[]"));
+        dialog.setSize(400, 350);
+        dialog.setLocationRelativeTo(this);
 
-            String sql = "SELECT id_kategori, kode_kategori, nama_kategori, deskripsi FROM kategori " +
-                         "WHERE kode_kategori LIKE ? OR nama_kategori LIKE ? OR deskripsi LIKE ? " +
-                         "ORDER BY " + sortColumn + " " + sortOrder + " " +
-                         "LIMIT ? OFFSET ?";
+        JComboBox<PeminjamanItem> cmbPeminjaman = new JComboBox<>();
+        JComboBox<BukuItem> cmbBuku = new JComboBox<>();
+        JTextField txtQty = new JTextField(20);
+        JTextField txtCatatan = new JTextField(20);
 
-            try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        loadPeminjamanCombo(cmbPeminjaman);
+        loadBukuCombo(cmbBuku);
 
-                String searchPattern = "%" + searchKeyword + "%";
-                pstmt.setString(1, searchPattern);
-                pstmt.setString(2, searchPattern);
-                pstmt.setString(3, searchPattern);
-                pstmt.setInt(4, limit);
-                pstmt.setInt(5, offset);
-
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    while (rs.next()) {
-                        list.add(new KategoriData(
-                            rs.getInt("id_kategori"),
-                            rs.getString("kode_kategori"),
-                            rs.getString("nama_kategori"),
-                            rs.getString("deskripsi")
-                        ));
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Error fetching kategori: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
-            }
-            return list;
+        if (detail != null) {
+            setSelectedPeminjaman(cmbPeminjaman, detail.getIdPeminjaman());
+            setSelectedBuku(cmbBuku, detail.getIdBuku());
+            txtQty.setText(String.valueOf(detail.getQty()));
+            txtCatatan.setText(detail.getCatatan());
         }
 
-        private int getKategoriTotalCount(String searchKeyword) {
-            int count = 0;
-            String sql = "SELECT COUNT(*) FROM kategori " +
-                         "WHERE kode_kategori LIKE ? OR nama_kategori LIKE ? OR deskripsi LIKE ?";
+        dialog.add(new JLabel("No Peminjaman:"));
+        dialog.add(cmbPeminjaman, "wrap, growx");
+        dialog.add(new JLabel("Buku:"));
+        dialog.add(cmbBuku, "wrap, growx");
+        dialog.add(new JLabel("Qty:"));
+        dialog.add(txtQty, "wrap, growx");
+        dialog.add(new JLabel("Catatan:"));
+        dialog.add(txtCatatan, "wrap, growx");
 
-            try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        JButton btnSave = new JButton("Save");
+        btnSave.addActionListener(e -> {
+            PeminjamanItem selectedPeminjaman = (PeminjamanItem) cmbPeminjaman.getSelectedItem();
+            BukuItem selectedBuku = (BukuItem) cmbBuku.getSelectedItem();
+            String strQty = txtQty.getText();
+            String catatan = txtCatatan.getText();
 
-                String searchPattern = "%" + searchKeyword + "%";
-                pstmt.setString(1, searchPattern);
-                pstmt.setString(2, searchPattern);
-                pstmt.setString(3, searchPattern);
-
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next()) {
-                        count = rs.getInt(1);
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                 JOptionPane.showMessageDialog(this, "Error counting kategori: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            if (selectedPeminjaman == null || selectedBuku == null || strQty.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Please fill in all required fields.");
+                return;
             }
-            return count;
-        }
 
-        private void saveKategori(KategoriData kategori) {
-            String sql = "INSERT INTO kategori (kode_kategori, nama_kategori, deskripsi) VALUES (?, ?, ?)";
-            try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setString(1, kategori.getKodeKategori());
-                pstmt.setString(2, kategori.getNamaKategori());
-                pstmt.setString(3, kategori.getDeskripsi());
-                pstmt.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Error saving kategori: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            int qty = 0;
+            try {
+                qty = Integer.parseInt(strQty);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, "Invalid number format for Qty.");
+                return;
             }
-        }
 
-        private void updateKategori(KategoriData kategori) {
-            String sql = "UPDATE kategori SET kode_kategori = ?, nama_kategori = ?, deskripsi = ? WHERE id_kategori = ?";
-            try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setString(1, kategori.getKodeKategori());
-                pstmt.setString(2, kategori.getNamaKategori());
-                pstmt.setString(3, kategori.getDeskripsi());
-                pstmt.setInt(4, kategori.getIdKategori());
-                pstmt.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Error updating kategori: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            PeminjamanDetailData newDetail = new PeminjamanDetailData(
+                (detail == null) ? 0 : detail.getIdDetail(),
+                selectedPeminjaman.getId(),
+                "", // No handled by DB/DAO on reload
+                selectedBuku.getId(),
+                "", // Judul handled by DB/DAO on reload
+                qty,
+                catatan
+            );
+
+            if (detail == null) {
+                savePeminjamanDetail(newDetail);
+            } else {
+                updatePeminjamanDetail(newDetail);
             }
-        }
+            loadData();
+            dialog.dispose();
+        });
 
-        private void deleteKategori(int id) {
-            String sql = "DELETE FROM kategori WHERE id_kategori = ?";
-            try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setInt(1, id);
-                pstmt.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Error deleting kategori: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+        dialog.add(btnSave, "span, align right, gaptop 10");
+        dialog.setVisible(true);
+    }
+
+    private void loadPeminjamanCombo(JComboBox<PeminjamanItem> cmb) {
+        cmb.removeAllItems();
+        String sql = "SELECT id_peminjaman, no_peminjaman FROM peminjaman ORDER BY no_peminjaman DESC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                cmb.addItem(new PeminjamanItem(rs.getInt("id_peminjaman"), rs.getString("no_peminjaman")));
             }
-        }
-
-        private KategoriData getKategoriById(int id) {
-            KategoriData kategori = null;
-            String sql = "SELECT * FROM kategori WHERE id_kategori = ?";
-            try (Connection conn = DatabaseConnection.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setInt(1, id);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next()) {
-                        kategori = new KategoriData(
-                            rs.getInt("id_kategori"),
-                            rs.getString("kode_kategori"),
-                            rs.getString("nama_kategori"),
-                            rs.getString("deskripsi")
-                        );
-                    }
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Error getting kategori: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
-            }
-            return kategori;
-        }
-
-        // --- Main Method ---
-        public static void main(String[] args) {
-            SwingUtilities.invokeLater(() -> {
-                new PeminjamanDetail().setVisible(true);
-            });
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
+
+    private void loadBukuCombo(JComboBox<BukuItem> cmb) {
+        cmb.removeAllItems();
+        String sql = "SELECT id_buku, judul FROM buku ORDER BY judul ASC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+                cmb.addItem(new BukuItem(rs.getInt("id_buku"), rs.getString("judul")));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setSelectedPeminjaman(JComboBox<PeminjamanItem> cmb, int id) {
+        for (int i = 0; i < cmb.getItemCount(); i++) {
+            if (cmb.getItemAt(i).getId() == id) {
+                cmb.setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
+    private void setSelectedBuku(JComboBox<BukuItem> cmb, int id) {
+        for (int i = 0; i < cmb.getItemCount(); i++) {
+            if (cmb.getItemAt(i).getId() == id) {
+                cmb.setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
+    // =================================== DAO Logic ====================================
+
+    private List<PeminjamanDetailData> getAllPeminjamanDetail(int limit, int offset, String sortColumn, String sortOrder, String searchKeyword) {
+        List<PeminjamanDetailData> list = new ArrayList<>();
+
+        if (!sortColumn.matches("pd.id_detail|p.no_peminjaman|b.judul|pd.qty|pd.catatan")) {
+            sortColumn = "pd.id_detail";
+        }
+        if (!sortOrder.equalsIgnoreCase("ASC") && !sortOrder.equalsIgnoreCase("DESC")) {
+            sortOrder = "ASC";
+        }
+
+        String sql = "SELECT pd.*, p.no_peminjaman, b.judul " +
+                     "FROM peminjaman_detail pd " +
+                     "LEFT JOIN peminjaman p ON pd.id_peminjaman = p.id_peminjaman " +
+                     "LEFT JOIN buku b ON pd.id_buku = b.id_buku " +
+                     "WHERE p.no_peminjaman LIKE ? OR b.judul LIKE ? " +
+                     "ORDER BY " + sortColumn + " " + sortOrder + " " +
+                     "LIMIT ? OFFSET ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            String searchPattern = "%" + searchKeyword + "%";
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+            pstmt.setInt(3, limit);
+            pstmt.setInt(4, offset);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new PeminjamanDetailData(
+                        rs.getInt("id_detail"),
+                        rs.getInt("id_peminjaman"),
+                        rs.getString("no_peminjaman"),
+                        rs.getInt("id_buku"),
+                        rs.getString("judul"),
+                        rs.getInt("qty"),
+                        rs.getString("catatan")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error fetching detail: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+        return list;
+    }
+
+    private int getDetailTotalCount(String searchKeyword) {
+        int count = 0;
+        String sql = "SELECT COUNT(*) FROM peminjaman_detail pd " +
+                     "LEFT JOIN peminjaman p ON pd.id_peminjaman = p.id_peminjaman " +
+                     "LEFT JOIN buku b ON pd.id_buku = b.id_buku " +
+                     "WHERE p.no_peminjaman LIKE ? OR b.judul LIKE ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            String searchPattern = "%" + searchKeyword + "%";
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    count = rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    private void savePeminjamanDetail(PeminjamanDetailData pd) {
+        String sql = "INSERT INTO peminjaman_detail (id_peminjaman, id_buku, qty, catatan) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, pd.getIdPeminjaman());
+            pstmt.setInt(2, pd.getIdBuku());
+            pstmt.setInt(3, pd.getQty());
+            pstmt.setString(4, pd.getCatatan());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error saving detail: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void updatePeminjamanDetail(PeminjamanDetailData pd) {
+        String sql = "UPDATE peminjaman_detail SET id_peminjaman=?, id_buku=?, qty=?, catatan=? WHERE id_detail=?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, pd.getIdPeminjaman());
+            pstmt.setInt(2, pd.getIdBuku());
+            pstmt.setInt(3, pd.getQty());
+            pstmt.setString(4, pd.getCatatan());
+            pstmt.setInt(5, pd.getIdDetail());
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error updating detail: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void deleteDetail(int id) {
+        String sql = "DELETE FROM peminjaman_detail WHERE id_detail = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error deleting detail: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private PeminjamanDetailData getDetailById(int id) {
+        PeminjamanDetailData pd = null;
+        String sql = "SELECT pd.*, p.no_peminjaman, b.judul " +
+                     "FROM peminjaman_detail pd " +
+                     "LEFT JOIN peminjaman p ON pd.id_peminjaman = p.id_peminjaman " +
+                     "LEFT JOIN buku b ON pd.id_buku = b.id_buku " +
+                     "WHERE pd.id_detail = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    pd = new PeminjamanDetailData(
+                        rs.getInt("id_detail"),
+                        rs.getInt("id_peminjaman"),
+                        rs.getString("no_peminjaman"),
+                        rs.getInt("id_buku"),
+                        rs.getString("judul"),
+                        rs.getInt("qty"),
+                        rs.getString("catatan")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return pd;
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new PeminjamanDetail().setVisible(true);
+        });
+    }
+}

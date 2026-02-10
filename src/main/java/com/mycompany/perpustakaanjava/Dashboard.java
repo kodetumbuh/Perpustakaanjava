@@ -76,7 +76,11 @@ public class Dashboard extends JFrame {
         JMenuItem itemRak = new JMenuItem("Rak Lemari");
         
         // Listeners Master Data
-        itemBuku.addActionListener(e -> JOptionPane.showMessageDialog(this, "Form Data Buku belum tersedia."));
+        itemBuku.addActionListener(e -> {
+            Buku f = new Buku();
+            f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            f.setVisible(true);
+        });
         
         itemKategori.addActionListener(e -> {
             Kategori f = new Kategori();
