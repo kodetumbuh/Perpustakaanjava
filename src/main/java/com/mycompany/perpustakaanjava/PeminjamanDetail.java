@@ -106,6 +106,19 @@ public class PeminjamanDetail extends JFrame {
         loadData();
     }
 
+    // Constructor for linking from Peminjaman
+    public PeminjamanDetail(String noPeminjamanFilter) {
+        this();
+        if (noPeminjamanFilter != null && !noPeminjamanFilter.isEmpty()) {
+            txtSearch.setText(noPeminjamanFilter);
+            loadData();
+        }
+    }
+    
+    public void showAddDialog() {
+        showDetailDialog(null);
+    }
+
     private void initUI() {
         setLayout(new MigLayout("fill, insets 20", "[grow]", "[][grow][]"));
 
@@ -295,6 +308,17 @@ public class PeminjamanDetail extends JFrame {
             setSelectedBuku(cmbBuku, detail.getIdBuku());
             txtQty.setText(String.valueOf(detail.getQty()));
             txtCatatan.setText(detail.getCatatan());
+        } else {
+             // Try to pre-select based on search filter if valid
+             String currentSearch = txtSearch.getText();
+             if (!currentSearch.isEmpty()) {
+                 for (int i=0; i<cmbPeminjaman.getItemCount(); i++) {
+                     if (cmbPeminjaman.getItemAt(i).toString().trim().equals(currentSearch.trim())) {
+                         cmbPeminjaman.setSelectedIndex(i);
+                         break;
+                     }
+                 }
+             }
         }
 
         dialog.add(new JLabel("No Peminjaman:"));

@@ -69,6 +69,7 @@ public class Dashboard extends JFrame {
         JMenu MenuPengaturan = new JMenu("Pengaturan");       
 
         // ======================= 1. MENU MASTER DATA =======================
+        JMenuItem itemAnggota = new JMenuItem("Anggota");
         JMenuItem itemBuku = new JMenuItem("Buku");
         JMenuItem itemKategori = new JMenuItem("Kategori");
         JMenuItem itemPenerbit = new JMenuItem("Penerbit");
@@ -76,6 +77,12 @@ public class Dashboard extends JFrame {
         JMenuItem itemRak = new JMenuItem("Rak Lemari");
         
         // Listeners Master Data
+        itemAnggota.addActionListener(e -> {
+            Anggota f = new Anggota();
+            f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            f.setVisible(true);
+        });        
+        
         itemBuku.addActionListener(e -> {
             Buku f = new Buku();
             f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -106,7 +113,8 @@ public class Dashboard extends JFrame {
             f.setVisible(true);
         });
         
-        MenuDataMaster.add(itemBuku);
+        MenuDataMaster.add(itemAnggota);
+        MenuDataMaster.add(itemBuku);        
         MenuDataMaster.add(itemKategori);
         MenuDataMaster.add(itemPenerbit);
         MenuDataMaster.add(itemPengarang);

@@ -412,12 +412,19 @@ public class Peminjaman extends JFrame {
             );
 
             if (peminjaman == null) {
-                savePeminjaman(data);
+                if (savePeminjaman(data)) {
+                     PeminjamanDetail pd = new PeminjamanDetail(data.getNoPeminjaman());
+                     pd.setVisible(false);
+                     pd.showAddDialog();
+                     pd.dispose();
+                     dialog.dispose();
+                }
             } else {
-                updatePeminjaman(data);
+                if (updatePeminjaman(data)) {
+                     dialog.dispose();
+                }
             }
             loadData();
-            dialog.dispose();
         });
 
         dialog.add(btnSave, "span, align right, gaptop 10");
@@ -587,7 +594,7 @@ public class Peminjaman extends JFrame {
         return count;
     }
 
-    private void savePeminjaman(PeminjamanData p) {
+    private boolean savePeminjaman(PeminjamanData p) {
         String sql = "INSERT INTO peminjaman (no_peminjaman, id_anggota, id_user, tgl_peminjaman, tgl_kembali_rencana, tgl_kembali_aktual, denda, status) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -605,13 +612,15 @@ public class Peminjaman extends JFrame {
             pstmt.setDouble(7, p.getDenda());
             pstmt.setString(8, p.getStatus());
             pstmt.executeUpdate();
+            return true;
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error saving peminjaman: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            return false;
         }
     }
 
-    private void updatePeminjaman(PeminjamanData p) {
+    private boolean updatePeminjaman(PeminjamanData p) {
         String sql = "UPDATE peminjaman SET no_peminjaman=?, id_anggota=?, id_user=?, tgl_peminjaman=?, tgl_kembali_rencana=?, tgl_kembali_aktual=?, denda=?, status=? " +
                      "WHERE id_peminjaman=?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -630,9 +639,11 @@ public class Peminjaman extends JFrame {
             pstmt.setString(8, p.getStatus());
             pstmt.setInt(9, p.getIdPeminjaman());
             pstmt.executeUpdate();
+            return true;
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error updating peminjaman: " + e.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+            return false;
         }
     }
 
