@@ -312,6 +312,7 @@ public class Peminjaman extends JFrame {
         dialog.setLocationRelativeTo(this);
 
         JTextField txtNoPeminjaman = new JTextField(20);
+        txtNoPeminjaman.setEditable(false);
         JComboBox<AnggotaItem> cmbAnggota = new JComboBox<>();
         JComboBox<UserItem> cmbUser = new JComboBox<>();
         JDateChooser dateChooserPinjam = new JDateChooser();
@@ -343,6 +344,7 @@ public class Peminjaman extends JFrame {
             cmbStatus.setSelectedItem(peminjaman.getStatus());
         } else {
             // Default values for new
+            txtNoPeminjaman.setText(generateNoPeminjaman());
             dateChooserPinjam.setDate(new Date());
             txtDenda.setText("0.0");
         }
@@ -468,6 +470,43 @@ public class Peminjaman extends JFrame {
                 return;
             }
         }
+    }
+
+    // --- Helper Methods for Auto-Numbering ---
+    private String generateNoPeminjaman() {
+        // Format: PJM<8_digit_random_number>
+        // Example: PJM12345678
+        String prefix = "PJM";
+        java.util.Random random = new java.util.Random();
+        String generatedNo = "";
+        boolean isUnique = false;
+
+        while (!isUnique) {
+            int randomNumber = 10000000 + random.nextInt(90000000); // 8 digit number
+            generatedNo = prefix + randomNumber;
+            
+            // Check uniqueness in DB
+            if (isNoPeminjamanUnique(generatedNo)) {
+                isUnique = true;
+            }
+        }
+        return generatedNo;
+    }
+
+    private boolean isNoPeminjamanUnique(String noPeminjaman) {
+        String sql = "SELECT COUNT(*) FROM peminjaman WHERE no_peminjaman = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, noPeminjaman);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) == 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     // =================================== DAO Logic ====================================

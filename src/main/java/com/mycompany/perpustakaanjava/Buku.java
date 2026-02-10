@@ -185,7 +185,7 @@ public class Buku extends JFrame {
 
         // === Table Section ===
         // ID, ISBN, Judul, Pengarang, Penerbit, Kategori, Tahun, Stok, Lokasi Rak
-        String[] columnNames = {"ID", "ISBN", "Judul", "Pengarang", "Penerbit", "Kategori", "Tahun", "Stok Total", "Lokasi Rak"};
+        String[] columnNames = {"ID", "ISBN", "Judul", "Pengarang", "Penerbit", "Kategori", "Tahun", "Stok Total", "Stok Tersedia", "Lokasi Rak"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -199,7 +199,7 @@ public class Buku extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int col = table.columnAtPoint(e.getPoint());
-                String[] dbColumns = {"id_buku", "isbn", "judul", "nama_pengarang", "nama_penerbit", "nama_kategori", "tahun_terbit", "stok_total", "lokasi_rak"};
+                String[] dbColumns = {"id_buku", "isbn", "judul", "nama_pengarang", "nama_penerbit", "nama_kategori", "tahun_terbit", "stok_total", "stok_tersedia", "lokasi_rak"};
 
                 if (col >= 0 && col < dbColumns.length) {
                     String clickedColumn = dbColumns[col];
@@ -330,6 +330,7 @@ public class Buku extends JFrame {
                 b.getNamaKategori(),
                 b.getTahunTerbit(),
                 b.getStokTotal(),
+                b.getStokTersedia(),
                 b.getLokasiRak()
             });
         }
@@ -630,7 +631,7 @@ public class Buku extends JFrame {
     private List<BukuData> getAllBuku(int limit, int offset, String sortColumn, String sortOrder, String searchKeyword) {
         List<BukuData> list = new ArrayList<>();
 
-        if (!sortColumn.matches("id_buku|isbn|judul|nama_pengarang|nama_penerbit|nama_kategori|tahun_terbit|stok_total|lokasi_rak")) {
+        if (!sortColumn.matches("id_buku|isbn|judul|nama_pengarang|nama_penerbit|nama_kategori|tahun_terbit|stok_total|stok_tersedia|lokasi_rak")) {
             sortColumn = "id_buku";
         }
         if (!sortOrder.equalsIgnoreCase("ASC") && !sortOrder.equalsIgnoreCase("DESC")) {

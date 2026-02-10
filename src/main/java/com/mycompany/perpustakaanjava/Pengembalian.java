@@ -513,19 +513,27 @@ public class Pengembalian extends JFrame {
         String sql = "SELECT pg.*, p.no_peminjaman, u.username " +
                      "FROM pengembalian pg " +
                      "LEFT JOIN peminjaman p ON pg.id_peminjaman = p.id_peminjaman " +
-                     "LEFT JOIN user u ON pg.id_user = u.id_user " +
-                     "WHERE p.no_peminjaman LIKE ? OR u.username LIKE ? " +
-                     "ORDER BY " + sortColumn + " " + sortOrder + " " +
-                     "LIMIT ? OFFSET ?";
+                     "LEFT JOIN user u ON pg.id_user = u.id_user ";
+
+        boolean hasSearch = searchKeyword != null && !searchKeyword.trim().isEmpty();
+        if (hasSearch) {
+            sql += "WHERE p.no_peminjaman LIKE ? OR u.username LIKE ? ";
+        }
+
+        sql += "ORDER BY " + sortColumn + " " + sortOrder + " " +
+               "LIMIT ? OFFSET ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            String searchPattern = "%" + searchKeyword + "%";
-            pstmt.setString(1, searchPattern);
-            pstmt.setString(2, searchPattern);
-            pstmt.setInt(3, limit);
-            pstmt.setInt(4, offset);
+            int paramIndex = 1;
+            if (hasSearch) {
+                String searchPattern = "%" + searchKeyword + "%";
+                pstmt.setString(paramIndex++, searchPattern);
+                pstmt.setString(paramIndex++, searchPattern);
+            }
+            pstmt.setInt(paramIndex++, limit);
+            pstmt.setInt(paramIndex++, offset);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -556,15 +564,21 @@ public class Pengembalian extends JFrame {
         int count = 0;
         String sql = "SELECT COUNT(*) FROM pengembalian pg " +
                      "LEFT JOIN peminjaman p ON pg.id_peminjaman = p.id_peminjaman " +
-                     "LEFT JOIN user u ON pg.id_user = u.id_user " +
-                     "WHERE p.no_peminjaman LIKE ? OR u.username LIKE ?";
+                     "LEFT JOIN user u ON pg.id_user = u.id_user ";
+
+        boolean hasSearch = searchKeyword != null && !searchKeyword.trim().isEmpty();
+        if (hasSearch) {
+            sql += "WHERE p.no_peminjaman LIKE ? OR u.username LIKE ?";
+        }
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            String searchPattern = "%" + searchKeyword + "%";
-            pstmt.setString(1, searchPattern);
-            pstmt.setString(2, searchPattern);
+            if (hasSearch) {
+                String searchPattern = "%" + searchKeyword + "%";
+                pstmt.setString(1, searchPattern);
+                pstmt.setString(2, searchPattern);
+            }
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
