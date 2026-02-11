@@ -547,6 +547,8 @@ public class Anggota extends JFrame {
                 updateAnggota(newAnggota);
             }
             
+            generateLibraryCard(newAnggota);
+            
             if (webcam != null && webcam.isOpen()) {
                 webcam.close();
             }
@@ -568,9 +570,94 @@ public class Anggota extends JFrame {
         dialog.setVisible(true);
     }
 
+    private void generateLibraryCard(AnggotaData anggota) {
+        try {
+            // 1. Load Template
+            BufferedImage template = ImageIO.read(getClass().getResource("/com/mycompany/perpustakaanjava/Templatecard.png"));
+            if (template == null) {
+               System.err.println("Template not found in resources!");
+               return; 
+            }
+            
+            int width = template.getWidth();
+            int height = template.getHeight();
+            
+            BufferedImage cardImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = cardImage.createGraphics();
+            
+            // Draw Background
+            g2d.drawImage(template, 0, 0, null);
+            
+            // --- BARCODE (Above Nomor Anggota) ---
+            int barcodeHeight = 120; // Bigger height
+            int barcodeWidth = 600;  // Bigger width
+            int barcodeX = 50;       
+            int barcodeY = 200;      // Move down significantly (was 100)
+
+            if (anggota.getNoBarcode() != null && !anggota.getNoBarcode().isEmpty()) {
+                ImageIcon barcodeIcon = generateBarcodeImage(anggota.getNoBarcode());
+                if (barcodeIcon != null) {
+                    java.awt.Image barcodeImg = barcodeIcon.getImage();
+                    g2d.drawImage(barcodeImg, barcodeX, barcodeY, barcodeWidth, barcodeHeight, null); 
+                }
+            }
+
+            // --- PHOTO (Right Side) ---
+            int photoWidth = 200;
+            int photoHeight = 250;
+            int photoX = width - photoWidth - 50; // 50px padding from right
+            int photoY = 220;
+            
+            // Draw Red Box Placeholder if no photo
+            g2d.setColor(Color.RED);
+            g2d.fillRect(photoX, photoY, photoWidth, photoHeight);
+
+            if (anggota.getNamaPhoto() != null && !anggota.getNamaPhoto().isEmpty()) {
+                String userHome = System.getProperty("user.home");
+                File photoFile = new File(userHome + "/Pictures/kartu-perpustakaan/" + anggota.getNamaPhoto());
+                if (photoFile.exists()) {
+                    BufferedImage photo = ImageIO.read(photoFile);
+                    g2d.drawImage(photo, photoX, photoY, photoWidth, photoHeight, null);
+                }
+            }
+
+            // --- TEXT DETAILS (Left Side) ---
+            g2d.setColor(Color.BLACK);
+            g2d.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 30));
+            
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            int textX = 50;
+            int textY = 350; // Adjusted text start Y to be below the lower barcode
+            int lineHeight = 50; // Increased line height for bigger font
+            
+            g2d.drawString("Nomor Anggota : " + anggota.getNoAnggota(), textX, textY); textY += lineHeight;
+            g2d.drawString("Nama : " + anggota.getNama(), textX, textY); textY += lineHeight;
+            g2d.drawString("Tempat Lahir : " + anggota.getTempatLahir(), textX, textY); textY += lineHeight;
+            g2d.drawString("Tanggal Lahir : " + (anggota.getTanggalLahir() != null ? sdf.format(anggota.getTanggalLahir()) : "-"), textX, textY); textY += lineHeight;
+            g2d.drawString("Alamat : " + anggota.getAlamat(), textX, textY);
+            
+            g2d.dispose();
+            
+            // 5. Save Card Image
+            String userHome = System.getProperty("user.home");
+            File folder = new File(userHome + "/Pictures/kartu-perpustakaan");
+            if (!folder.exists()) folder.mkdirs();
+            
+            File outputFile = new File(folder, "card_" + anggota.getNoAnggota() + ".png");
+            ImageIO.write(cardImage, "png", outputFile);
+            
+            System.out.println("Library card generated at: " + outputFile.getAbsolutePath());
+            
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error generating library card: " + ex.getMessage());
+        }
+    }
+
     // =================================== DAO Logic ====================================
 
     private List<AnggotaData> getAllAnggota(int limit, int offset, String sortColumn, String sortOrder, String searchKeyword) {
+
         List<AnggotaData> list = new ArrayList<>();
 
         if (!sortColumn.matches("id_anggota|no_anggota|nama|jenis_kelamin|tempat_lahir|tanggal_lahir|alamat|no_telepon|email|no_identitas|tgl_daftar|tgl_expired|status")) {
