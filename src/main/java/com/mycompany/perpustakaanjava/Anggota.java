@@ -359,7 +359,7 @@ public class Anggota extends JFrame {
         if (webcam != null) {
             webcam.setViewSize(WebcamResolution.VGA.getSize());
             webcamPanel = new WebcamPanel(webcam);
-            webcamPanel.setMirrored(true);
+            webcamPanel.setMirrored(false);
             webcamPanel.setPreferredSize(new Dimension(300, 225));
             pnlCamera.add(webcamPanel, "wrap, w 300!, h 225!");
         } else {
@@ -379,6 +379,7 @@ public class Anggota extends JFrame {
         JPanel pnlForm = new JPanel(new MigLayout("fillx", "[right][grow]", "[]"));
         
         JTextField txtNoAnggota = new JTextField(20);
+        txtNoAnggota.setEditable(false);
         JTextField txtNama = new JTextField(20);
         JComboBox<String> cmbJenisKelamin = new JComboBox<>(new String[]{"L", "P"});
         JTextField txtTempatLahir = new JTextField(20);
@@ -436,6 +437,9 @@ public class Anggota extends JFrame {
             String generatedCode = String.valueOf(System.currentTimeMillis());
             txtNoBarcode.setText(generatedCode);
             lblBarcodeImage.setIcon(generateBarcodeImage(generatedCode));
+            
+            int randomNumAnggota = (int)(Math.random() * 900000) + 100000;
+            txtNoAnggota.setText("ANG" + randomNumAnggota);
         }
 
         pnlForm.add(new JLabel("No Barcode:"));
