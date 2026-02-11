@@ -16,6 +16,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.awt.image.BufferedImage;
+import java.awt.Graphics2D;
+import java.awt.Color;
+import de.vwsoft.barcodelib4j.oned.Barcode;
+import de.vwsoft.barcodelib4j.oned.BarcodeType;
 
 /**
  * Main application frame for managing Anggota.
@@ -38,6 +43,7 @@ public class Anggota extends JFrame {
         private Date tglDaftar;
         private Date tglExpired;
         private String status;
+        private String noBarcode;
 
         public AnggotaData() {}
 
@@ -56,7 +62,28 @@ public class Anggota extends JFrame {
             this.noIdentitas = noIdentitas;
             this.tglDaftar = tglDaftar;
             this.tglExpired = tglExpired;
+            this.tglExpired = tglExpired;
             this.status = status;
+            this.noBarcode = "";
+        }
+
+        public AnggotaData(int idAnggota, String noAnggota, String nama, String jenisKelamin, String tempatLahir,
+                           Date tanggalLahir, String alamat, String noTelepon, String email, String noIdentitas,
+                           Date tglDaftar, Date tglExpired, String status, String noBarcode) {
+            this.idAnggota = idAnggota;
+            this.noAnggota = noAnggota;
+            this.nama = nama;
+            this.jenisKelamin = jenisKelamin;
+            this.tempatLahir = tempatLahir;
+            this.tanggalLahir = tanggalLahir;
+            this.alamat = alamat;
+            this.noTelepon = noTelepon;
+            this.email = email;
+            this.noIdentitas = noIdentitas;
+            this.tglDaftar = tglDaftar;
+            this.tglExpired = tglExpired;
+            this.status = status;
+            this.noBarcode = noBarcode;
         }
 
         public int getIdAnggota() { return idAnggota; }
@@ -85,6 +112,8 @@ public class Anggota extends JFrame {
         public void setTglExpired(Date tglExpired) { this.tglExpired = tglExpired; }
         public String getStatus() { return status; }
         public void setStatus(String status) { this.status = status; }
+        public String getNoBarcode() { return noBarcode; }
+        public void setNoBarcode(String noBarcode) { this.noBarcode = noBarcode; }
 
         @Override
         public String toString() { return nama; }
@@ -316,6 +345,9 @@ public class Anggota extends JFrame {
         JDateChooser dateChooserDaftar = new JDateChooser();
         JDateChooser dateChooserExpired = new JDateChooser();
         JComboBox<String> cmbStatus = new JComboBox<>(new String[]{"Aktif", "Nonaktif", "Blokir"});
+        JTextField txtNoBarcode = new JTextField(20);
+        txtNoBarcode.setEditable(false); // Read-only as requested
+        JLabel lblBarcodeImage = new JLabel();
 
         dateChooserLahir.setLocale(new Locale("id"));
         dateChooserLahir.setDateFormatString("yyyy-MM-dd");
@@ -337,10 +369,28 @@ public class Anggota extends JFrame {
             dateChooserDaftar.setDate(anggota.getTglDaftar());
             dateChooserExpired.setDate(anggota.getTglExpired());
             cmbStatus.setSelectedItem(anggota.getStatus());
+            // Assuming AnggotaData has getNoBarcode()
+            // txtNoBarcode.setText(anggota.getNoBarcode());
+            // if (anggota.getNoBarcode() != null && !anggota.getNoBarcode().isEmpty()) {
+            //     lblBarcodeImage.setIcon(generateBarcodeImage(anggota.getNoBarcode()));
+            // }
+            cmbStatus.setSelectedItem(anggota.getStatus());
+            txtNoBarcode.setText(anggota.getNoBarcode());
+            if (anggota.getNoBarcode() != null && !anggota.getNoBarcode().isEmpty()) {
+                lblBarcodeImage.setIcon(generateBarcodeImage(anggota.getNoBarcode()));
+            }
         } else {
             dateChooserDaftar.setDate(new Date()); // Default today
+            // Auto-generate barcode: AGT + Timestamp
+            String generatedCode = "AGT" + System.currentTimeMillis();
+            txtNoBarcode.setText(generatedCode);
+            lblBarcodeImage.setIcon(generateBarcodeImage(generatedCode));
         }
 
+        dialog.add(new JLabel("No Barcode:"));
+        dialog.add(txtNoBarcode, "wrap, growx");
+        dialog.add(new JLabel("Barcode Image:"));
+        dialog.add(lblBarcodeImage, "wrap, height 60!"); 
         dialog.add(new JLabel("No Anggota:"));
         dialog.add(txtNoAnggota, "wrap, growx");
         dialog.add(new JLabel("Nama:"));
@@ -380,6 +430,7 @@ public class Anggota extends JFrame {
             Date tglDaftar = dateChooserDaftar.getDate();
             Date tglExpired = dateChooserExpired.getDate();
             String status = (String) cmbStatus.getSelectedItem();
+            String noBarcode = txtNoBarcode.getText();
 
             if (no.isEmpty() || nama.isEmpty()) {
                 JOptionPane.showMessageDialog(dialog, "Please fill in No Anggota and Nama.");
@@ -388,7 +439,7 @@ public class Anggota extends JFrame {
 
             AnggotaData newAnggota = new AnggotaData(
                 (anggota == null) ? 0 : anggota.getIdAnggota(),
-                no, nama, jk, tmpLahir, tglLahir, alamat, telp, email, noId, tglDaftar, tglExpired, status
+                no, nama, jk, tmpLahir, tglLahir, alamat, telp, email, noId, tglDaftar, tglExpired, status, noBarcode
             );
 
             if (anggota == null) {
@@ -445,7 +496,8 @@ public class Anggota extends JFrame {
                         rs.getString("no_identitas"),
                         rs.getDate("tgl_daftar"),
                         rs.getDate("tgl_expired"),
-                        rs.getString("status")
+                        rs.getString("status"),
+                        rs.getString("no_barcode")
                     ));
                 }
             }
@@ -480,8 +532,8 @@ public class Anggota extends JFrame {
     }
 
     private void saveAnggota(AnggotaData a) {
-        String sql = "INSERT INTO anggota (no_anggota, nama, jenis_kelamin, tempat_lahir, tanggal_lahir, alamat, no_telepon, email, no_identitas, tgl_daftar, tgl_expired, status) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO anggota (no_anggota, nama, jenis_kelamin, tempat_lahir, tanggal_lahir, alamat, no_telepon, email, no_identitas, tgl_daftar, tgl_expired, status, no_barcode) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, a.getNoAnggota());
@@ -496,6 +548,7 @@ public class Anggota extends JFrame {
             pstmt.setDate(10, a.getTglDaftar() != null ? new java.sql.Date(a.getTglDaftar().getTime()) : null);
             pstmt.setDate(11, a.getTglExpired() != null ? new java.sql.Date(a.getTglExpired().getTime()) : null);
             pstmt.setString(12, a.getStatus());
+            pstmt.setString(13, a.getNoBarcode());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -504,7 +557,7 @@ public class Anggota extends JFrame {
     }
 
     private void updateAnggota(AnggotaData a) {
-        String sql = "UPDATE anggota SET no_anggota=?, nama=?, jenis_kelamin=?, tempat_lahir=?, tanggal_lahir=?, alamat=?, no_telepon=?, email=?, no_identitas=?, tgl_daftar=?, tgl_expired=?, status=? " +
+        String sql = "UPDATE anggota SET no_anggota=?, nama=?, jenis_kelamin=?, tempat_lahir=?, tanggal_lahir=?, alamat=?, no_telepon=?, email=?, no_identitas=?, tgl_daftar=?, tgl_expired=?, status=?, no_barcode=? " +
                      "WHERE id_anggota=?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -520,7 +573,8 @@ public class Anggota extends JFrame {
             pstmt.setDate(10, a.getTglDaftar() != null ? new java.sql.Date(a.getTglDaftar().getTime()) : null);
             pstmt.setDate(11, a.getTglExpired() != null ? new java.sql.Date(a.getTglExpired().getTime()) : null);
             pstmt.setString(12, a.getStatus());
-            pstmt.setInt(13, a.getIdAnggota());
+            pstmt.setString(13, a.getNoBarcode());
+            pstmt.setInt(14, a.getIdAnggota());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -561,7 +615,8 @@ public class Anggota extends JFrame {
                         rs.getString("no_identitas"),
                         rs.getDate("tgl_daftar"),
                         rs.getDate("tgl_expired"),
-                        rs.getString("status")
+                        rs.getString("status"),
+                        rs.getString("no_barcode")
                     );
                 }
             }
@@ -569,6 +624,31 @@ public class Anggota extends JFrame {
             e.printStackTrace();
         }
         return a;
+    }
+
+    private ImageIcon generateBarcodeImage(String text) {
+        try {
+            if (text == null || text.isEmpty()) return null;
+            
+            Barcode barcode = Barcode.newInstance(BarcodeType.CODE128);
+            barcode.setContent(text, false, false);
+            
+            int width = 250;
+            int height = 50;
+            BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2 = img.createGraphics();
+            g2.setColor(Color.WHITE);
+            g2.fillRect(0, 0, width, height);
+            g2.setColor(Color.BLACK);
+            
+            barcode.draw(g2, 10, 5, width - 20, height - 10);
+            g2.dispose();
+            
+            return new ImageIcon(img);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public static void main(String[] args) {
