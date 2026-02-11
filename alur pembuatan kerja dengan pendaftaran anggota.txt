@@ -1,0 +1,10 @@
+alur pembuatan kartu barcode
+
+yang paling mudah terlebih dahulu
+
+- pendaftaran langsung insert data menggunakan beberapa form 
+- form bisa mengakses kamera secara langsung untuk memfoto 
+- dibagian form auto generate barcode (otomatis) dan non-aktif
+- user bisa klik foto atau batal 
+- jika user acc foto maka lanjut tekan save
+- maka hasil generate kartu disimpan manual berbentuk PNG di folder pictures/kartu-perpustakaan
