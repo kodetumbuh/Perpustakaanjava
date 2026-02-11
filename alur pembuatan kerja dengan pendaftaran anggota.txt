@@ -8,3 +8,6 @@ yang paling mudah terlebih dahulu
 - user bisa klik foto atau batal 
 - jika user acc foto maka lanjut tekan save
 - maka hasil generate kartu disimpan manual berbentuk PNG di folder pictures/kartu-perpustakaan
+
+
+barcode gunakan okapi

@@ -21,6 +21,13 @@ import java.awt.Graphics2D;
 import java.awt.Color;
 import de.vwsoft.barcodelib4j.oned.Barcode;
 import de.vwsoft.barcodelib4j.oned.BarcodeType;
+import com.github.sarxos.webcam.Webcam;
+import com.github.sarxos.webcam.WebcamPanel;
+import com.github.sarxos.webcam.WebcamResolution;
+import java.awt.Dimension;
+import java.io.File;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
 /**
  * Main application frame for managing Anggota.
@@ -44,6 +51,7 @@ public class Anggota extends JFrame {
         private Date tglExpired;
         private String status;
         private String noBarcode;
+        private String namaPhoto;
 
         public AnggotaData() {}
 
@@ -65,11 +73,12 @@ public class Anggota extends JFrame {
             this.tglExpired = tglExpired;
             this.status = status;
             this.noBarcode = "";
+            this.namaPhoto = "";
         }
 
         public AnggotaData(int idAnggota, String noAnggota, String nama, String jenisKelamin, String tempatLahir,
                            Date tanggalLahir, String alamat, String noTelepon, String email, String noIdentitas,
-                           Date tglDaftar, Date tglExpired, String status, String noBarcode) {
+                           Date tglDaftar, Date tglExpired, String status, String noBarcode, String namaPhoto) {
             this.idAnggota = idAnggota;
             this.noAnggota = noAnggota;
             this.nama = nama;
@@ -84,6 +93,7 @@ public class Anggota extends JFrame {
             this.tglExpired = tglExpired;
             this.status = status;
             this.noBarcode = noBarcode;
+            this.namaPhoto = namaPhoto;
         }
 
         public int getIdAnggota() { return idAnggota; }
@@ -114,6 +124,8 @@ public class Anggota extends JFrame {
         public void setStatus(String status) { this.status = status; }
         public String getNoBarcode() { return noBarcode; }
         public void setNoBarcode(String noBarcode) { this.noBarcode = noBarcode; }
+        public String getNamaPhoto() { return namaPhoto; }
+        public void setNamaPhoto(String namaPhoto) { this.namaPhoto = namaPhoto; }
 
         @Override
         public String toString() { return nama; }
@@ -327,12 +339,45 @@ public class Anggota extends JFrame {
         updatePageInfo(currentPage, totalPages, totalRecords);
     }
 
+    private BufferedImage capturedImage = null;
+
     private void showAnggotaDialog(AnggotaData anggota) {
         JDialog dialog = new JDialog(this, anggota == null ? "Add Anggota" : "Edit Anggota", true);
-        dialog.setLayout(new MigLayout("fill, insets 20", "[right][grow]", "[]"));
-        dialog.setSize(500, 600);
+        dialog.setLayout(new MigLayout("fill, insets 20", "[320!][grow]", "[grow][]"));
+        dialog.setSize(900, 650);
         dialog.setLocationRelativeTo(this);
 
+        // --- Left Column: Webcam & Photo ---
+        JPanel pnlCamera = new JPanel(new MigLayout("fill", "[center]", "[][][]"));
+        
+        Webcam webcam = Webcam.getDefault();
+        WebcamPanel webcamPanel = null;
+        JLabel lblPhotoPreview = new JLabel();
+        lblPhotoPreview.setPreferredSize(new Dimension(300, 300));
+        lblPhotoPreview.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        
+        if (webcam != null) {
+            webcam.setViewSize(WebcamResolution.VGA.getSize());
+            webcamPanel = new WebcamPanel(webcam);
+            webcamPanel.setMirrored(true);
+            webcamPanel.setPreferredSize(new Dimension(300, 225));
+            pnlCamera.add(webcamPanel, "wrap, w 300!, h 225!");
+        } else {
+            pnlCamera.add(new JLabel("No Webcam Detected"), "wrap, w 300!, h 225!");
+        }
+
+        JButton btnAmbilPhoto = new JButton("Ambil Photo");
+        JButton btnBatalPhoto = new JButton("Batal");
+        
+        pnlCamera.add(btnAmbilPhoto, "split 2, growx");
+        pnlCamera.add(btnBatalPhoto, "growx, wrap");
+        pnlCamera.add(lblPhotoPreview, "w 300!, h 225!");
+        
+        dialog.add(pnlCamera, "growy, top");
+
+        // --- Right Column: Form Fields ---
+        JPanel pnlForm = new JPanel(new MigLayout("fillx", "[right][grow]", "[]"));
+        
         JTextField txtNoAnggota = new JTextField(20);
         JTextField txtNama = new JTextField(20);
         JComboBox<String> cmbJenisKelamin = new JComboBox<>(new String[]{"L", "P"});
@@ -346,7 +391,7 @@ public class Anggota extends JFrame {
         JDateChooser dateChooserExpired = new JDateChooser();
         JComboBox<String> cmbStatus = new JComboBox<>(new String[]{"Aktif", "Nonaktif", "Blokir"});
         JTextField txtNoBarcode = new JTextField(20);
-        txtNoBarcode.setEditable(false); // Read-only as requested
+        txtNoBarcode.setEditable(false);
         JLabel lblBarcodeImage = new JLabel();
 
         dateChooserLahir.setLocale(new Locale("id"));
@@ -369,52 +414,79 @@ public class Anggota extends JFrame {
             dateChooserDaftar.setDate(anggota.getTglDaftar());
             dateChooserExpired.setDate(anggota.getTglExpired());
             cmbStatus.setSelectedItem(anggota.getStatus());
-            // Assuming AnggotaData has getNoBarcode()
-            // txtNoBarcode.setText(anggota.getNoBarcode());
-            // if (anggota.getNoBarcode() != null && !anggota.getNoBarcode().isEmpty()) {
-            //     lblBarcodeImage.setIcon(generateBarcodeImage(anggota.getNoBarcode()));
-            // }
-            cmbStatus.setSelectedItem(anggota.getStatus());
             txtNoBarcode.setText(anggota.getNoBarcode());
             if (anggota.getNoBarcode() != null && !anggota.getNoBarcode().isEmpty()) {
                 lblBarcodeImage.setIcon(generateBarcodeImage(anggota.getNoBarcode()));
             }
+            if (anggota.getNamaPhoto() != null && !anggota.getNamaPhoto().isEmpty()) {
+                 String userHome = System.getProperty("user.home");
+                 File photoFile = new File(userHome + "/Pictures/kartu-perpustakaan/" + anggota.getNamaPhoto());
+                 if (photoFile.exists()) {
+                     try {
+                         BufferedImage img = ImageIO.read(photoFile);
+                         java.awt.Image dimg = img.getScaledInstance(300, 225, java.awt.Image.SCALE_SMOOTH);
+                         lblPhotoPreview.setIcon(new ImageIcon(dimg));
+                     } catch (IOException ex) {
+                         ex.printStackTrace();
+                     }
+                 }
+            }
         } else {
-            dateChooserDaftar.setDate(new Date()); // Default today
-            // Auto-generate barcode: AGT + Timestamp
-            String generatedCode = "AGT" + System.currentTimeMillis();
+            dateChooserDaftar.setDate(new Date());
+            String generatedCode = String.valueOf(System.currentTimeMillis());
             txtNoBarcode.setText(generatedCode);
             lblBarcodeImage.setIcon(generateBarcodeImage(generatedCode));
         }
 
-        dialog.add(new JLabel("No Barcode:"));
-        dialog.add(txtNoBarcode, "wrap, growx");
-        dialog.add(new JLabel("Barcode Image:"));
-        dialog.add(lblBarcodeImage, "wrap, height 60!"); 
-        dialog.add(new JLabel("No Anggota:"));
-        dialog.add(txtNoAnggota, "wrap, growx");
-        dialog.add(new JLabel("Nama:"));
-        dialog.add(txtNama, "wrap, growx");
-        dialog.add(new JLabel("Jenis Kelamin:"));
-        dialog.add(cmbJenisKelamin, "wrap, growx");
-        dialog.add(new JLabel("Tempat Lahir:"));
-        dialog.add(txtTempatLahir, "wrap, growx");
-        dialog.add(new JLabel("Tanggal Lahir:"));
-        dialog.add(dateChooserLahir, "wrap, growx");
-        dialog.add(new JLabel("Alamat:"));
-        dialog.add(txtAlamat, "wrap, growx");
-        dialog.add(new JLabel("No Telepon:"));
-        dialog.add(txtNoTelepon, "wrap, growx");
-        dialog.add(new JLabel("Email:"));
-        dialog.add(txtEmail, "wrap, growx");
-        dialog.add(new JLabel("No Identitas:"));
-        dialog.add(txtNoIdentitas, "wrap, growx");
-        dialog.add(new JLabel("Tgl Daftar:"));
-        dialog.add(dateChooserDaftar, "wrap, growx");
-        dialog.add(new JLabel("Tgl Expired:"));
-        dialog.add(dateChooserExpired, "wrap, growx");
-        dialog.add(new JLabel("Status:"));
-        dialog.add(cmbStatus, "wrap, growx");
+        pnlForm.add(new JLabel("No Barcode:"));
+        pnlForm.add(txtNoBarcode, "wrap, growx");
+        pnlForm.add(new JLabel("Barcode Image:"));
+        pnlForm.add(lblBarcodeImage, "wrap, height 60!"); 
+        pnlForm.add(new JLabel("No Anggota:"));
+        pnlForm.add(txtNoAnggota, "wrap, growx");
+        pnlForm.add(new JLabel("Nama:"));
+        pnlForm.add(txtNama, "wrap, growx");
+        pnlForm.add(new JLabel("Jenis Kelamin:"));
+        pnlForm.add(cmbJenisKelamin, "wrap, growx");
+        pnlForm.add(new JLabel("Tempat Lahir:"));
+        pnlForm.add(txtTempatLahir, "wrap, growx");
+        pnlForm.add(new JLabel("Tanggal Lahir:"));
+        pnlForm.add(dateChooserLahir, "wrap, growx");
+        pnlForm.add(new JLabel("Alamat:"));
+        pnlForm.add(txtAlamat, "wrap, growx");
+        pnlForm.add(new JLabel("No Telepon:"));
+        pnlForm.add(txtNoTelepon, "wrap, growx");
+        pnlForm.add(new JLabel("Email:"));
+        pnlForm.add(txtEmail, "wrap, growx");
+        pnlForm.add(new JLabel("No Identitas:"));
+        pnlForm.add(txtNoIdentitas, "wrap, growx");
+        pnlForm.add(new JLabel("Tgl Daftar:"));
+        pnlForm.add(dateChooserDaftar, "wrap, growx");
+        pnlForm.add(new JLabel("Tgl Expired:"));
+        pnlForm.add(dateChooserExpired, "wrap, growx");
+        pnlForm.add(new JLabel("Status:"));
+        pnlForm.add(cmbStatus, "wrap, growx");
+
+        dialog.add(pnlForm, "grow, wrap");
+
+        capturedImage = null;
+        
+        btnAmbilPhoto.addActionListener(e -> {
+            if (webcam != null && webcam.isOpen()) {
+                capturedImage = webcam.getImage();
+                if (capturedImage != null) {
+                   java.awt.Image dimg = capturedImage.getScaledInstance(300, 225, java.awt.Image.SCALE_SMOOTH);
+                   lblPhotoPreview.setIcon(new ImageIcon(dimg));
+                }
+            } else {
+                JOptionPane.showMessageDialog(dialog, "Webcam is not open or not detected.");
+            }
+        });
+
+        btnBatalPhoto.addActionListener(e -> {
+            capturedImage = null;
+            lblPhotoPreview.setIcon(null);
+        });
 
         JButton btnSave = new JButton("Save");
         btnSave.addActionListener(e -> {
@@ -436,10 +508,33 @@ public class Anggota extends JFrame {
                 JOptionPane.showMessageDialog(dialog, "Please fill in No Anggota and Nama.");
                 return;
             }
+            
+            String photoFilename = (anggota != null) ? anggota.getNamaPhoto() : "";
+
+            if (capturedImage != null) {
+                try {
+                    String userHome = System.getProperty("user.home");
+                    File folder = new File(userHome + "/Pictures/kartu-perpustakaan");
+                    if (!folder.exists()) {
+                        folder.mkdirs();
+                    }
+                    
+                    String randomNum = String.valueOf(System.currentTimeMillis());
+                    String fileName = "anggota" + randomNum + ".jpg";
+                    File outputFile = new File(folder, fileName);
+                    
+                    ImageIO.write(capturedImage, "jpg", outputFile);
+                    photoFilename = fileName;
+                    
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(dialog, "Error saving photo: " + ex.getMessage());
+                }
+            }
 
             AnggotaData newAnggota = new AnggotaData(
                 (anggota == null) ? 0 : anggota.getIdAnggota(),
-                no, nama, jk, tmpLahir, tglLahir, alamat, telp, email, noId, tglDaftar, tglExpired, status, noBarcode
+                no, nama, jk, tmpLahir, tglLahir, alamat, telp, email, noId, tglDaftar, tglExpired, status, noBarcode, photoFilename
             );
 
             if (anggota == null) {
@@ -447,11 +542,25 @@ public class Anggota extends JFrame {
             } else {
                 updateAnggota(newAnggota);
             }
+            
+            if (webcam != null && webcam.isOpen()) {
+                webcam.close();
+            }
+            
             loadData();
             dialog.dispose();
         });
+        
+        dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                if (webcam != null && webcam.isOpen()) {
+                    webcam.close();
+                }
+            }
+        });
 
-        dialog.add(btnSave, "span, align right, gaptop 10");
+        dialog.add(btnSave, "span 2, align right, gaptop 10");
         dialog.setVisible(true);
     }
 
@@ -497,7 +606,8 @@ public class Anggota extends JFrame {
                         rs.getDate("tgl_daftar"),
                         rs.getDate("tgl_expired"),
                         rs.getString("status"),
-                        rs.getString("no_barcode")
+                        rs.getString("no_barcode"),
+                        rs.getString("nama_photo")
                     ));
                 }
             }
@@ -532,8 +642,8 @@ public class Anggota extends JFrame {
     }
 
     private void saveAnggota(AnggotaData a) {
-        String sql = "INSERT INTO anggota (no_anggota, nama, jenis_kelamin, tempat_lahir, tanggal_lahir, alamat, no_telepon, email, no_identitas, tgl_daftar, tgl_expired, status, no_barcode) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO anggota (no_anggota, nama, jenis_kelamin, tempat_lahir, tanggal_lahir, alamat, no_telepon, email, no_identitas, tgl_daftar, tgl_expired, status, no_barcode, nama_photo) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, a.getNoAnggota());
@@ -549,6 +659,7 @@ public class Anggota extends JFrame {
             pstmt.setDate(11, a.getTglExpired() != null ? new java.sql.Date(a.getTglExpired().getTime()) : null);
             pstmt.setString(12, a.getStatus());
             pstmt.setString(13, a.getNoBarcode());
+            pstmt.setString(14, a.getNamaPhoto());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -557,7 +668,7 @@ public class Anggota extends JFrame {
     }
 
     private void updateAnggota(AnggotaData a) {
-        String sql = "UPDATE anggota SET no_anggota=?, nama=?, jenis_kelamin=?, tempat_lahir=?, tanggal_lahir=?, alamat=?, no_telepon=?, email=?, no_identitas=?, tgl_daftar=?, tgl_expired=?, status=?, no_barcode=? " +
+        String sql = "UPDATE anggota SET no_anggota=?, nama=?, jenis_kelamin=?, tempat_lahir=?, tanggal_lahir=?, alamat=?, no_telepon=?, email=?, no_identitas=?, tgl_daftar=?, tgl_expired=?, status=?, no_barcode=?, nama_photo=? " +
                      "WHERE id_anggota=?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -574,7 +685,8 @@ public class Anggota extends JFrame {
             pstmt.setDate(11, a.getTglExpired() != null ? new java.sql.Date(a.getTglExpired().getTime()) : null);
             pstmt.setString(12, a.getStatus());
             pstmt.setString(13, a.getNoBarcode());
-            pstmt.setInt(14, a.getIdAnggota());
+            pstmt.setString(14, a.getNamaPhoto());
+            pstmt.setInt(15, a.getIdAnggota());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -616,7 +728,8 @@ public class Anggota extends JFrame {
                         rs.getDate("tgl_daftar"),
                         rs.getDate("tgl_expired"),
                         rs.getString("status"),
-                        rs.getString("no_barcode")
+                        rs.getString("no_barcode"),
+                        rs.getString("nama_photo")
                     );
                 }
             }
