@@ -515,26 +515,13 @@ public class Anggota extends JFrame {
             
             String photoFilename = (anggota != null) ? anggota.getNamaPhoto() : "";
 
+            // Start of modified photo handling logic - no file saving for raw photo
             if (capturedImage != null) {
-                try {
-                    String userHome = System.getProperty("user.home");
-                    File folder = new File(userHome + "/Pictures/kartu-perpustakaan");
-                    if (!folder.exists()) {
-                        folder.mkdirs();
-                    }
-                    
-                    String randomNum = String.valueOf(System.currentTimeMillis());
-                    String fileName = "anggota" + randomNum + ".jpg";
-                    File outputFile = new File(folder, fileName);
-                    
-                    ImageIO.write(capturedImage, "jpg", outputFile);
-                    photoFilename = fileName;
-                    
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(dialog, "Error saving photo: " + ex.getMessage());
-                }
+                // We do NOT save the file to disk as per request.
+                // We just set a marker filename so DB is not empty.
+                photoFilename = "CAPTURED_PHOTO";
             }
+            // End of modified photo handling logic
 
             AnggotaData newAnggota = new AnggotaData(
                 (anggota == null) ? 0 : anggota.getIdAnggota(),
@@ -547,7 +534,7 @@ public class Anggota extends JFrame {
                 updateAnggota(newAnggota);
             }
             
-            generateLibraryCard(newAnggota);
+            generateLibraryCard(newAnggota, capturedImage);
             
             if (webcam != null && webcam.isOpen()) {
                 webcam.close();
@@ -570,7 +557,7 @@ public class Anggota extends JFrame {
         dialog.setVisible(true);
     }
 
-    private void generateLibraryCard(AnggotaData anggota) {
+    private void generateLibraryCard(AnggotaData anggota, BufferedImage capturedPhoto) {
         try {
             // 1. Load Template
             BufferedImage template = ImageIO.read(getClass().getResource("/com/mycompany/perpustakaanjava/Templatecard.png"));
@@ -612,7 +599,12 @@ public class Anggota extends JFrame {
             g2d.setColor(Color.RED);
             g2d.fillRect(photoX, photoY, photoWidth, photoHeight);
 
-            if (anggota.getNamaPhoto() != null && !anggota.getNamaPhoto().isEmpty()) {
+            if (capturedPhoto != null) {
+                // Priority: Use captured photo from memory
+                java.awt.Image scaled = capturedPhoto.getScaledInstance(photoWidth, photoHeight, java.awt.Image.SCALE_SMOOTH);
+                g2d.drawImage(scaled, photoX, photoY, null);
+            } else if (anggota.getNamaPhoto() != null && !anggota.getNamaPhoto().isEmpty() && !anggota.getNamaPhoto().equals("CAPTURED_PHOTO")) {
+                 // Fallback: Use stored photo from disk (legacy or manually added)
                 String userHome = System.getProperty("user.home");
                 File photoFile = new File(userHome + "/Pictures/kartu-perpustakaan/" + anggota.getNamaPhoto());
                 if (photoFile.exists()) {

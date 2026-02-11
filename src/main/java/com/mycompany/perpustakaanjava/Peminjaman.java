@@ -11,7 +11,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,14 +37,14 @@ public class Peminjaman extends JFrame {
         private Date tglPeminjaman;
         private Date tglKembaliRencana;
         private Date tglKembaliAktual;
-        private double denda;
+        private String denda;
         private String status;
 
         public PeminjamanData() {}
 
         public PeminjamanData(int idPeminjaman, String noPeminjaman, int idAnggota, String namaAnggota,
                               int idUser, String username, Date tglPeminjaman, Date tglKembaliRencana,
-                              Date tglKembaliAktual, double denda, String status) {
+                              Date tglKembaliAktual, String denda, String status) {
             this.idPeminjaman = idPeminjaman;
             this.noPeminjaman = noPeminjaman;
             this.idAnggota = idAnggota;
@@ -74,8 +77,8 @@ public class Peminjaman extends JFrame {
         public void setTglKembaliRencana(Date tglKembaliRencana) { this.tglKembaliRencana = tglKembaliRencana; }
         public Date getTglKembaliAktual() { return tglKembaliAktual; }
         public void setTglKembaliAktual(Date tglKembaliAktual) { this.tglKembaliAktual = tglKembaliAktual; }
-        public double getDenda() { return denda; }
-        public void setDenda(double denda) { this.denda = denda; }
+        public String getDenda() { return denda; }
+        public void setDenda(String denda) { this.denda = denda; }
         public String getStatus() { return status; }
         public void setStatus(String status) { this.status = status; }
 
@@ -346,7 +349,7 @@ public class Peminjaman extends JFrame {
             // Default values for new
             txtNoPeminjaman.setText(generateNoPeminjaman());
             dateChooserPinjam.setDate(new Date());
-            txtDenda.setText("0.0");
+            txtDenda.setText("0");
         }
 
         dialog.add(new JLabel("No Peminjaman:"));
@@ -366,6 +369,22 @@ public class Peminjaman extends JFrame {
 
         dialog.add(new JLabel("Tgl Kembali (Aktual):"));
         dialog.add(dateChooserKembaliAktual, "wrap, growx");
+
+        // Add KeyListener for Denda Formatting
+        txtDenda.addKeyListener(new KeyAdapter() {
+            public void keyReleased(KeyEvent e) {
+                try {
+                    String text = txtDenda.getText().replaceAll(",", "");
+                    if (!text.isEmpty()) {
+                        long number = Long.parseLong(text);
+                        String formatted = NumberFormat.getNumberInstance(Locale.US).format(number);
+                        txtDenda.setText(formatted);
+                    }
+                } catch (NumberFormatException ex) {
+                    // Ignore non-numeric input but keep text clean
+                }
+            }
+        });
 
         dialog.add(new JLabel("Denda:"));
         dialog.add(txtDenda, "wrap, growx");
@@ -389,9 +408,10 @@ public class Peminjaman extends JFrame {
                 return;
             }
 
-            double denda = 0;
+            String denda = strDenda;
             try {
-                denda = Double.parseDouble(strDenda);
+                // Validate if it's double parseable (remove formatting first)
+                Double.parseDouble(strDenda.replace(",", ""));
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(dialog, "Invalid number format for Denda.");
                 return;
@@ -529,7 +549,9 @@ public class Peminjaman extends JFrame {
             sortOrder = "DESC";
         }
 
-        String sql = "SELECT p.*, a.nama, u.username " +
+        // Use FORMAT(p.denda, 0) to remove trailing zeros and format numbers
+        String sql = "SELECT p.id_peminjaman, p.no_peminjaman, p.id_anggota, p.id_user, p.tgl_peminjaman, " +
+                     "p.tgl_kembali_rencana, p.tgl_kembali_aktual, FORMAT(p.denda, 0) as denda, p.status, a.nama, u.username " +
                      "FROM peminjaman p " +
                      "LEFT JOIN anggota a ON p.id_anggota = a.id_anggota " +
                      "LEFT JOIN user u ON p.id_user = u.id_user " +
@@ -558,7 +580,7 @@ public class Peminjaman extends JFrame {
                         rs.getDate("tgl_peminjaman"),
                         rs.getDate("tgl_kembali_rencana"),
                         rs.getDate("tgl_kembali_aktual"),
-                        rs.getDouble("denda"),
+                        rs.getString("denda"),
                         rs.getString("status")
                     ));
                 }
@@ -609,7 +631,9 @@ public class Peminjaman extends JFrame {
             } else {
                 pstmt.setNull(6, java.sql.Types.DATE);
             }
-            pstmt.setDouble(7, p.getDenda());
+            // Remove formatting (commas) before saving to DB
+            double dendaValue = Double.parseDouble(p.getDenda().replace(",", ""));
+            pstmt.setDouble(7, dendaValue);
             pstmt.setString(8, p.getStatus());
             pstmt.executeUpdate();
             return true;
@@ -635,7 +659,9 @@ public class Peminjaman extends JFrame {
             } else {
                 pstmt.setNull(6, java.sql.Types.DATE);
             }
-            pstmt.setDouble(7, p.getDenda());
+            // Remove formatting (commas) before saving to DB
+            double dendaValue = Double.parseDouble(p.getDenda().replace(",", ""));
+            pstmt.setDouble(7, dendaValue);
             pstmt.setString(8, p.getStatus());
             pstmt.setInt(9, p.getIdPeminjaman());
             pstmt.executeUpdate();
@@ -661,7 +687,8 @@ public class Peminjaman extends JFrame {
 
     private PeminjamanData getPeminjamanById(int id) {
         PeminjamanData p = null;
-        String sql = "SELECT p.*, a.nama, u.username " +
+        String sql = "SELECT p.id_peminjaman, p.no_peminjaman, p.id_anggota, p.id_user, p.tgl_peminjaman, " +
+                     "p.tgl_kembali_rencana, p.tgl_kembali_aktual, FORMAT(p.denda, 0) as denda, p.status, a.nama, u.username " +
                      "FROM peminjaman p " +
                      "LEFT JOIN anggota a ON p.id_anggota = a.id_anggota " +
                      "LEFT JOIN user u ON p.id_user = u.id_user " +
@@ -681,7 +708,7 @@ public class Peminjaman extends JFrame {
                         rs.getDate("tgl_peminjaman"),
                         rs.getDate("tgl_kembali_rencana"),
                         rs.getDate("tgl_kembali_aktual"),
-                        rs.getDouble("denda"),
+                        rs.getString("denda"),
                         rs.getString("status")
                     );
                 }
