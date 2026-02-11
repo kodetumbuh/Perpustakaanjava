@@ -35,3 +35,5 @@ Properti (tambahan)
 Pengaturan Tema
 
 tambah pesan 1
+
+menambahkan fitur camera di anggota 
