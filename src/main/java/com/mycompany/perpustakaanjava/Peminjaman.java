@@ -353,7 +353,11 @@ public class Peminjaman extends JFrame {
         JComboBox<UserItem> cmbUser = new JComboBox<>();
         JDateChooser dateChooserPinjam = new JDateChooser();
         JDateChooser dateChooserKembaliRencana = new JDateChooser();
-        JDateChooser dateChooserKembaliAktual = new JDateChooser();
+        
+        // Changed to JTextField (Non-Active) as requested
+        JTextField txtTglKembaliAktual = new JTextField(20);
+        txtTglKembaliAktual.setEditable(false);
+        
         JTextField txtDenda = new JTextField(20);
         JComboBox<String> cmbStatus = new JComboBox<>(new String[]{"Dipinjam", "Kembali", "Telat", "Hilang"}); // Example statuses
 
@@ -362,8 +366,7 @@ public class Peminjaman extends JFrame {
         dateChooserPinjam.setDateFormatString("yyyy-MM-dd");
         dateChooserKembaliRencana.setLocale(new Locale("id"));
         dateChooserKembaliRencana.setDateFormatString("yyyy-MM-dd");
-        dateChooserKembaliAktual.setLocale(new Locale("id"));
-        dateChooserKembaliAktual.setDateFormatString("yyyy-MM-dd");
+        // Removed JDateChooser for Aktual since it's now JTextField
 
         // Load ComboBox Data
         // loadAnggotaCombo(cmbAnggota); // Removed
@@ -385,7 +388,14 @@ public class Peminjaman extends JFrame {
             setSelectedUser(cmbUser, peminjaman.getIdUser());
             dateChooserPinjam.setDate(peminjaman.getTglPeminjaman());
             dateChooserKembaliRencana.setDate(peminjaman.getTglKembaliRencana());
-            dateChooserKembaliAktual.setDate(peminjaman.getTglKembaliAktual());
+            
+            if (peminjaman.getTglKembaliAktual() != null) {
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                txtTglKembaliAktual.setText(sdf.format(peminjaman.getTglKembaliAktual()));
+            } else {
+                txtTglKembaliAktual.setText("-");
+            }
+            
             txtDenda.setText(String.valueOf(peminjaman.getDenda()));
             cmbStatus.setSelectedItem(peminjaman.getStatus());
         } else {
@@ -423,7 +433,7 @@ public class Peminjaman extends JFrame {
         dialog.add(dateChooserKembaliRencana, "wrap, growx");
 
         dialog.add(new JLabel("Tgl Kembali (Aktual):"));
-        dialog.add(dateChooserKembaliAktual, "wrap, growx");
+        dialog.add(txtTglKembaliAktual, "wrap, growx");
 
         // Add KeyListener for Denda Formatting
         txtDenda.addKeyListener(new KeyAdapter() {
@@ -454,7 +464,9 @@ public class Peminjaman extends JFrame {
             UserItem selectedUser = (UserItem) cmbUser.getSelectedItem();
             Date tglPinjam = dateChooserPinjam.getDate();
             Date tglRencana = dateChooserKembaliRencana.getDate();
-            Date tglAktual = dateChooserKembaliAktual.getDate();
+            // Tgl Aktual handled by logic (preserve existing or null for new)
+            Date tglAktual = (peminjaman != null) ? peminjaman.getTglKembaliAktual() : null;
+            
             String strDenda = txtDenda.getText();
             String status = (String) cmbStatus.getSelectedItem();
 

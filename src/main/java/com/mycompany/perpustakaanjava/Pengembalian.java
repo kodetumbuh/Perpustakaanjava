@@ -319,6 +319,18 @@ public class Pengembalian extends JFrame {
         JComboBox<UserItem> cmbUser = new JComboBox<>();
         JDateChooser dateChooserPengembalian = new JDateChooser();
         JDateChooser dateChooserRencana = new JDateChooser();
+        
+        // --- Added: Member Search Fields ---
+        JTextField txtNoAnggota = new JTextField(20); // Barcode Input
+        JTextField txtNama = new JTextField(20); txtNama.setEditable(false);
+        JTextField txtJK = new JTextField(20); txtJK.setEditable(false);
+        JTextField txtAlamat = new JTextField(20); txtAlamat.setEditable(false);
+        JTextField txtNoTelepon = new JTextField(20); txtNoTelepon.setEditable(false);
+        JTextField txtNoIdentitas = new JTextField(20); txtNoIdentitas.setEditable(false);
+
+        // Define search logic here (need forward declaration or final array)
+        final int[] selectedAnggotaId = new int[]{-1}; 
+        
         JTextField txtHariTerlambat = new JTextField(20);
         JTextField txtTarifDenda = new JTextField(20);
         JTextField txtTotalDenda = new JTextField(20);
@@ -330,10 +342,69 @@ public class Pengembalian extends JFrame {
         dateChooserRencana.setLocale(new Locale("id"));
         dateChooserRencana.setDateFormatString("yyyy-MM-dd");
 
-        loadPeminjamanCombo(cmbPeminjaman);
+        dateChooserRencana.setDateFormatString("yyyy-MM-dd");
+
+        // --- Logic for Member Search ---
+        java.awt.event.ActionListener searchAction = e -> {
+            String keyword = txtNoAnggota.getText().trim();
+            if (keyword.isEmpty()) return;
+            
+            // Reuse Anggota Data Inner Class (Requires Anggota.java to have public static inner class AnggotaData)
+            // Since Peminjaman.java uses AnggotaData, I assume it's accessible or I need to import/duplicate it.
+            // Based on previous file view, Anggota.AnggotaData is public static.
+            Anggota.AnggotaData anggota = getAnggotaByBarcodeOrId(keyword);
+            
+            if (anggota != null) {
+                selectedAnggotaId[0] = anggota.getIdAnggota();
+                txtNama.setText(anggota.getNama());
+                txtJK.setText(anggota.getJenisKelamin());
+                txtAlamat.setText(anggota.getAlamat());
+                txtNoTelepon.setText(anggota.getNoTelepon());
+                txtNoIdentitas.setText(anggota.getNoIdentitas());
+                txtNoAnggota.setText(anggota.getNoAnggota());
+                
+                // Load Active Loans for this Member
+                loadActivePeminjamanByAnggota(cmbPeminjaman, anggota.getIdAnggota());
+            } else {
+                selectedAnggotaId[0] = -1;
+                txtNama.setText("");
+                txtJK.setText("");
+                txtAlamat.setText("");
+                txtNoTelepon.setText("");
+                txtNoIdentitas.setText("");
+                cmbPeminjaman.removeAllItems(); // Clear loans if member not found
+                JOptionPane.showMessageDialog(dialog, "Anggota not found for: " + keyword, "Not Found", JOptionPane.WARNING_MESSAGE);
+            }
+        };
+        txtNoAnggota.addActionListener(searchAction);
+
+        // loadPeminjamanCombo(cmbPeminjaman); // Removed default load, only load when member found or editing
+        loadUserCombo(cmbUser);
+
         loadUserCombo(cmbUser);
 
         if (pengembalian != null) {
+             // If editing, we need to load the Peminjaman combo correctly 
+             // Ideally we should know the member ID from the existing loan record.
+             // But existing PengembalianData doesn't store member ID directly (only through Peminjaman).
+             // We can fetch member ID based on pengembalian.getIdPeminjaman().
+             // For simplicity, let's load ALL active loans or specifically the current one + others for that member.
+             // Let's implement helper getAnggotaIdByPeminjamanId
+             int memberId = getAnggotaIdByPeminjamanId(pengembalian.getIdPeminjaman());
+             if (memberId != -1) {
+                  Anggota.AnggotaData a = getAnggotaById(memberId);
+                  if (a != null) {
+                      selectedAnggotaId[0] = a.getIdAnggota();
+                      txtNoAnggota.setText(a.getNoAnggota());
+                      txtNama.setText(a.getNama());
+                      txtJK.setText(a.getJenisKelamin());
+                      txtAlamat.setText(a.getAlamat());
+                      txtNoTelepon.setText(a.getNoTelepon());
+                      txtNoIdentitas.setText(a.getNoIdentitas());
+                      loadActivePeminjamanByAnggota(cmbPeminjaman, memberId); // Load loans for this member
+                  }
+             }
+             // Then select the current one
             setSelectedPeminjaman(cmbPeminjaman, pengembalian.getIdPeminjaman());
             setSelectedUser(cmbUser, pengembalian.getIdUser());
             dateChooserPengembalian.setDate(pengembalian.getTglPengembalian());
@@ -357,7 +428,23 @@ public class Pengembalian extends JFrame {
         txtTarifDenda.addActionListener(e -> calculateLateDays(dateChooserPengembalian, dateChooserRencana, txtHariTerlambat, txtTarifDenda, txtTotalDenda));
 
 
-        dialog.add(new JLabel("No Peminjaman:"));
+        
+        dialog.add(new JLabel("Scan Barcode / No Anggota:"));
+        dialog.add(txtNoAnggota, "wrap, growx");
+        dialog.add(new JLabel("(Press Enter to Search)"), "wrap, al right");
+
+        dialog.add(new JLabel("Nama:"));
+        dialog.add(txtNama, "wrap, growx");
+        dialog.add(new JLabel("Jenis Kelamin:"));
+        dialog.add(txtJK, "wrap, growx");
+        dialog.add(new JLabel("Alamat:"));
+        dialog.add(txtAlamat, "wrap, growx");
+        dialog.add(new JLabel("No Telepon:"));
+        dialog.add(txtNoTelepon, "wrap, growx");
+        dialog.add(new JLabel("No Identitas:"));
+        dialog.add(txtNoIdentitas, "wrap, growx");
+        
+        dialog.add(new JLabel("No Peminjaman (Active):"));
         dialog.add(cmbPeminjaman, "wrap, growx");
         dialog.add(new JLabel("Petugas (User):"));
         dialog.add(cmbUser, "wrap, growx");
@@ -452,18 +539,108 @@ public class Pengembalian extends JFrame {
         }
     }
 
-    private void loadPeminjamanCombo(JComboBox<PeminjamanItem> cmb) {
-        cmb.removeAllItems();
-        String sql = "SELECT id_peminjaman, no_peminjaman FROM peminjaman ORDER BY no_peminjaman DESC";
+    // --- Helper for Scanning Anggota ---
+    private Anggota.AnggotaData getAnggotaByBarcodeOrId(String keyword) {
+        Anggota.AnggotaData a = null;
+        String sql = "SELECT * FROM anggota WHERE no_anggota = ? OR no_barcode = ?";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                cmb.addItem(new PeminjamanItem(rs.getInt("id_peminjaman"), rs.getString("no_peminjaman")));
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, keyword);
+            pstmt.setString(2, keyword);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    a = new Anggota.AnggotaData(
+                        rs.getInt("id_anggota"),
+                        rs.getString("no_anggota"),
+                        rs.getString("nama"),
+                        rs.getString("jenis_kelamin"),
+                        rs.getString("tempat_lahir"),
+                        rs.getDate("tanggal_lahir"),
+                        rs.getString("alamat"),
+                        rs.getString("no_telepon"),
+                        rs.getString("email"),
+                        rs.getString("no_identitas"),
+                        rs.getDate("tgl_daftar"),
+                        rs.getDate("tgl_expired"),
+                        rs.getString("status"),
+                        rs.getString("no_barcode"),
+                        rs.getString("nama_photo")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error searching anggota: " + e.getMessage());
+        }
+        return a;
+    }
+    
+    private Anggota.AnggotaData getAnggotaById(int id) {
+        Anggota.AnggotaData a = null;
+        String sql = "SELECT * FROM anggota WHERE id_anggota = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    a = new Anggota.AnggotaData(
+                        rs.getInt("id_anggota"),
+                        rs.getString("no_anggota"),
+                        rs.getString("nama"),
+                        rs.getString("jenis_kelamin"),
+                        rs.getString("tempat_lahir"),
+                        rs.getDate("tanggal_lahir"),
+                        rs.getString("alamat"),
+                        rs.getString("no_telepon"),
+                        rs.getString("email"),
+                        rs.getString("no_identitas"),
+                        rs.getDate("tgl_daftar"),
+                        rs.getDate("tgl_expired"),
+                        rs.getString("status"),
+                        rs.getString("no_barcode"),
+                        rs.getString("nama_photo")
+                    );
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return a;
+    }
+
+    // Helper to filtered active loans by member
+    private void loadActivePeminjamanByAnggota(JComboBox<PeminjamanItem> cmb, int memberId) {
+        cmb.removeAllItems();
+        // Load only loans with status 'Dipinjam' (or whatever indicates active) for this member
+        String sql = "SELECT id_peminjaman, no_peminjaman FROM peminjaman WHERE id_anggota = ? AND status = 'Dipinjam' ORDER BY no_peminjaman DESC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             pstmt.setInt(1, memberId);
+             try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    cmb.addItem(new PeminjamanItem(rs.getInt("id_peminjaman"), rs.getString("no_peminjaman")));
+                }
+             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private int getAnggotaIdByPeminjamanId(int peminjamanId) {
+        int id = -1;
+        String sql = "SELECT id_anggota FROM peminjaman WHERE id_peminjaman = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, peminjamanId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    id = rs.getInt("id_anggota");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return id;
     }
 
     private void loadUserCombo(JComboBox<UserItem> cmb) {
