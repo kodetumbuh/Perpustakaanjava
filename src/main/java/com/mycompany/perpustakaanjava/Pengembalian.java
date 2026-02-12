@@ -430,6 +430,40 @@ public class Pengembalian extends JFrame {
         // Add Logic to Auto Calc Total Denda if tarif changes
         txtTarifDenda.addActionListener(e -> calculateLateDays(dateChooserPengembalian, dateChooserRencana, txtHariTerlambat, txtTarifDenda, txtTotalDenda));
 
+        // KeyListener for formatting Tarif Denda
+        txtTarifDenda.addKeyListener(new KeyAdapter() {
+            public void keyReleased(KeyEvent e) {
+                try {
+                    String text = txtTarifDenda.getText().replaceAll(",", "");
+                    if (!text.isEmpty()) {
+                        long number = Long.parseLong(text);
+                        String formatted = NumberFormat.getNumberInstance(Locale.US).format(number);
+                        if (!txtTarifDenda.getText().equals(formatted)) {
+                             txtTarifDenda.setText(formatted);
+                        }
+                    }
+                } catch (NumberFormatException ex) {
+                }
+            }
+        });
+
+        // KeyListener for formatting Total Denda
+        txtTotalDenda.addKeyListener(new KeyAdapter() {
+            public void keyReleased(KeyEvent e) {
+                try {
+                    String text = txtTotalDenda.getText().replaceAll(",", "");
+                    if (!text.isEmpty()) {
+                        long number = Long.parseLong(text);
+                        String formatted = NumberFormat.getNumberInstance(Locale.US).format(number);
+                        if (!txtTotalDenda.getText().equals(formatted)) {
+                             txtTotalDenda.setText(formatted);
+                        }
+                    }
+                } catch (NumberFormatException ex) {
+                }
+            }
+        });
+
 
         
         dialog.add(new JLabel("Scan Barcode / No Anggota:"));
