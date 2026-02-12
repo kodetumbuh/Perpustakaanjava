@@ -13,6 +13,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import java.util.function.Function;
 
 /**
  * Main application frame for managing Buku.
@@ -341,26 +348,159 @@ public class Buku extends JFrame {
         updatePageInfo(currentPage, totalPages, totalRecords);
     }
 
+    // --- Autocomplete ComboBox Inner Class ---
+    public static class AutocompleteComboBox<T> extends JComboBox<T> {
+        private final Function<String, List<T>> searchFunc;
+        private boolean isFiredByKeyboard = false;
+
+        public AutocompleteComboBox(Function<String, List<T>> searchFunc) {
+            this.searchFunc = searchFunc;
+            setEditable(true);
+            
+            JTextField editor = (JTextField) getEditor().getEditorComponent();
+            editor.addKeyListener(new KeyAdapter() {
+                @Override
+                public void keyReleased(KeyEvent e) {
+                   if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_ENTER) {
+                       return;
+                   }
+                   char c = e.getKeyChar();
+                   if (!Character.isLetterOrDigit(c) && c != KeyEvent.VK_BACK_SPACE && c != KeyEvent.VK_DELETE && c != ' ') {
+                       // 
+                   }
+
+                   SwingUtilities.invokeLater(() -> {
+                       isFiredByKeyboard = true;
+                       String text = editor.getText();
+                       if (text.length() > 0) {
+                           performSearch(text);
+                       } else {
+                           hidePopup();
+                       }
+                       isFiredByKeyboard = false;
+                   });
+                }
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_DOWN && !isPopupVisible()) {
+                        showPopup();
+                    }
+                }
+            });
+        }
+        
+        private void performSearch(String text) {
+            List<T> results = searchFunc.apply(text);
+            DefaultComboBoxModel<T> model = (DefaultComboBoxModel<T>) getModel();
+            model.removeAllElements();
+            for (T item : results) {
+                model.addElement(item);
+            }
+            JTextField editor = (JTextField) getEditor().getEditorComponent();
+            editor.setText(text);
+            if (model.getSize() > 0) {
+                showPopup();
+            } else {
+                hidePopup();
+            }
+        }
+    }
+    
+    // --- Autocomplete Search Helpers (LIMIT 10) ---
+    private List<Pengarang.PengarangData> searchPengarang(String keyword) {
+        List<Pengarang.PengarangData> list = new ArrayList<>();
+        String sql = "SELECT * FROM pengarang WHERE nama_pengarang LIKE ? LIMIT 10";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + keyword + "%");
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Pengarang.PengarangData(
+                        rs.getInt("id_pengarang"), rs.getString("nama_pengarang"),
+                        rs.getString("negara"), rs.getString("biografi"), rs.getDate("tgl_lahir")
+                    ));
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+    private List<Penerbit.PenerbitData> searchPenerbit(String keyword) {
+        List<Penerbit.PenerbitData> list = new ArrayList<>();
+        String sql = "SELECT * FROM penerbit WHERE nama_penerbit LIKE ? LIMIT 10";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + keyword + "%");
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Penerbit.PenerbitData(
+                        rs.getInt("id_penerbit"), rs.getString("nama_penerbit"),
+                        rs.getString("alamat"), rs.getString("kota"), rs.getString("no_telepon"), rs.getString("email")
+                    ));
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+    private List<Kategori.KategoriData> searchKategori(String keyword) {
+        List<Kategori.KategoriData> list = new ArrayList<>();
+        String sql = "SELECT * FROM kategori WHERE nama_kategori LIKE ? LIMIT 10";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + keyword + "%");
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Kategori.KategoriData(
+                        rs.getInt("id_kategori"), rs.getString("kode_kategori"),
+                        rs.getString("nama_kategori"), rs.getString("deskripsi")
+                    ));
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+    private List<Rak.RakData> searchRak(String keyword) {
+        List<Rak.RakData> list = new ArrayList<>();
+        String sql = "SELECT * FROM rak WHERE lokasi LIKE ? OR kode_rak LIKE ? LIMIT 10";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + keyword + "%");
+            pstmt.setString(2, "%" + keyword + "%");
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new Rak.RakData(
+                        rs.getInt("id_rak"), rs.getString("kode_rak"),
+                        rs.getString("lokasi"), rs.getInt("kapasitas"), rs.getString("status")
+                    ));
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+
     private void showBukuDialog(BukuData buku) {
         JDialog dialog = new JDialog(this, buku == null ? "Add Buku" : "Edit Buku", true);
         dialog.setLayout(new MigLayout("fill, insets 20", "[][grow][][grow]", "[]")); // 4 columns for grid layout
         dialog.setSize(800, 600);
         dialog.setLocationRelativeTo(this);
 
+       
+        dialog.setLayout(new MigLayout("fill, insets 20", "[][grow]", "[]"));
+        dialog.setSize(600, 600); // Taller
+        dialog.setLocationRelativeTo(this);
+
         JTextField txtISBN = new JTextField(20);
         JTextField txtJudul = new JTextField(20);
         
-        // ComboBoxes for Foreign Keys
-        JComboBox<Pengarang.PengarangData> cmbPengarang = new JComboBox<>(getPengarangList().toArray(new Pengarang.PengarangData[0]));
-        JComboBox<Penerbit.PenerbitData> cmbPenerbit = new JComboBox<>(getPenerbitList().toArray(new Penerbit.PenerbitData[0]));
-        JComboBox<Kategori.KategoriData> cmbKategori = new JComboBox<>(getKategoriList().toArray(new Kategori.KategoriData[0]));
+        // Autocomplete ComboBoxes
+        AutocompleteComboBox<Pengarang.PengarangData> cmbPengarang = new AutocompleteComboBox<>(this::searchPengarang);
+        AutocompleteComboBox<Penerbit.PenerbitData> cmbPenerbit = new AutocompleteComboBox<>(this::searchPenerbit);
+        AutocompleteComboBox<Kategori.KategoriData> cmbKategori = new AutocompleteComboBox<>(this::searchKategori);
+        AutocompleteComboBox<Rak.RakData> cmbRak = new AutocompleteComboBox<>(this::searchRak);
         
         JTextField txtTahun = new JTextField(10);
         JTextField txtEdisi = new JTextField(20);
         JTextField txtHalaman = new JTextField(10);
         JTextField txtBahasa = new JTextField(20);
-        
-        JComboBox<Rak.RakData> cmbRak = new JComboBox<>(getRakList().toArray(new Rak.RakData[0]));
         
         JTextField txtStokTotal = new JTextField(10);
         JTextField txtStokTersedia = new JTextField(10);
@@ -376,17 +516,31 @@ public class Buku extends JFrame {
         if (buku != null) {
             txtISBN.setText(buku.getIsbn());
             txtJudul.setText(buku.getJudul());
-            // Select correct items in ComboBoxes
-            setSelectedPengarang(cmbPengarang, buku.getIdPengarang());
-            setSelectedPenerbit(cmbPenerbit, buku.getIdPenerbit());
-            setSelectedKategori(cmbKategori, buku.getIdKategori());
+            
+            // Pre-fill ComboBoxes (Synthesize logic or fetch if simpler)
+            // Using skeletons for correct ID and toString
+            Pengarang.PengarangData p = new Pengarang.PengarangData(); p.setIdPengarang(buku.getIdPengarang()); p.setNamaPengarang(buku.getNamaPengarang());
+            cmbPengarang.addItem(p); cmbPengarang.setSelectedItem(p);
+            
+            Penerbit.PenerbitData pn = new Penerbit.PenerbitData(); pn.setIdPenerbit(buku.getIdPenerbit()); pn.setNamaPenerbit(buku.getNamaPenerbit());
+            cmbPenerbit.addItem(pn); cmbPenerbit.setSelectedItem(pn);
+            
+            Kategori.KategoriData k = new Kategori.KategoriData(); k.setIdKategori(buku.getIdKategori()); k.setNamaKategori(buku.getNamaKategori());
+            cmbKategori.addItem(k); cmbKategori.setSelectedItem(k);
+            
+            Rak.RakData r = new Rak.RakData(); r.setIdRak(buku.getIdRak()); 
+            // Attempt to restore string. Assuming getLokasiRak() holds display string.
+            // But Rak.toString() is kode + " - " + lokasi.
+            // If getLokasiRak() is "A1 - Lt1", we can parse or just use it as string in editor if we don't care about object fields for display.
+            // For now, let's keep it simple: create skeleton with empty fields but override toString() locally? No, Java doesn't support easy anon for FK data struct.
+            // We just populate fields best effort.
+            r.setKodeRak(""); r.setLokasi(buku.getLokasiRak()); // Will show " - Location"
+            cmbRak.addItem(r); cmbRak.setSelectedItem(r);
             
             txtTahun.setText(String.valueOf(buku.getTahunTerbit()));
             txtEdisi.setText(buku.getEdisi());
             txtHalaman.setText(String.valueOf(buku.getHalaman()));
             txtBahasa.setText(buku.getBahasa());
-            
-            setSelectedRak(cmbRak, buku.getIdRak());
             
             txtStokTotal.setText(String.valueOf(buku.getStokTotal()));
             txtStokTersedia.setText(String.valueOf(buku.getStokTersedia()));
@@ -397,14 +551,12 @@ public class Buku extends JFrame {
             }
             cmbStatus.setSelectedItem(buku.getStatus());
         } else {
-             // Defaults
              txtStokTotal.setText("0");
              txtStokTersedia.setText("0");
              txtHarga.setText("0");
              dateChooser.setDate(new Date());
         }
 
-        // Layout Components
         dialog.add(new JLabel("ISBN:"));
         dialog.add(txtISBN, "growx");
         dialog.add(new JLabel("Judul:"));
@@ -456,17 +608,26 @@ public class Buku extends JFrame {
                 String isbn = txtISBN.getText();
                 String judul = txtJudul.getText();
                 
-                Pengarang.PengarangData p = (Pengarang.PengarangData) cmbPengarang.getSelectedItem();
-                int idPengarang = p != null ? p.getIdPengarang() : 0;
+                int idPengarang = 0;
+                Object pObj = cmbPengarang.getSelectedItem();
+                if (pObj instanceof Pengarang.PengarangData) idPengarang = ((Pengarang.PengarangData)pObj).getIdPengarang();
                 
-                Penerbit.PenerbitData pn = (Penerbit.PenerbitData) cmbPenerbit.getSelectedItem();
-                int idPenerbit = pn != null ? pn.getIdPenerbit() : 0;
+                int idPenerbit = 0;
+                Object pnObj = cmbPenerbit.getSelectedItem();
+                if (pnObj instanceof Penerbit.PenerbitData) idPenerbit = ((Penerbit.PenerbitData)pnObj).getIdPenerbit();
                 
-                Kategori.KategoriData k = (Kategori.KategoriData) cmbKategori.getSelectedItem();
-                int idKategori = k != null ? k.getIdKategori() : 0;
+                int idKategori = 0;
+                Object kObj = cmbKategori.getSelectedItem();
+                if (kObj instanceof Kategori.KategoriData) idKategori = ((Kategori.KategoriData)kObj).getIdKategori();
                 
-                Rak.RakData r = (Rak.RakData) cmbRak.getSelectedItem();
-                int idRak = r != null ? r.getIdRak() : 0;
+                int idRak = 0;
+                Object rObj = cmbRak.getSelectedItem();
+                if (rObj instanceof Rak.RakData) idRak = ((Rak.RakData)rObj).getIdRak();
+                
+                if (idPengarang == 0 || idPenerbit == 0 || idKategori == 0 || idRak == 0) {
+                     JOptionPane.showMessageDialog(dialog, "Please select valid Pengarang, Penerbit, Kategori, and Rak.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                     return;
+                }
 
                 int tahun = Integer.parseInt(txtTahun.getText());
                 String edisi = txtEdisi.getText();
@@ -489,10 +650,16 @@ public class Buku extends JFrame {
                 if (buku == null) {
                     saveBuku(newBuku);
                     loadData();
-
                     if (chkKeepOpen.isSelected()) {
                         txtISBN.setText("");
                         txtJudul.setText("");
+                        cmbPengarang.setSelectedIndex(-1);
+                        cmbPenerbit.setSelectedIndex(-1);
+                        cmbKategori.setSelectedIndex(-1);
+                        cmbRak.setSelectedIndex(-1);
+                        txtStokTotal.setText("0");
+                        txtStokTersedia.setText("0");
+                        txtHarga.setText("0");
                         txtISBN.requestFocus();
                     } else {
                         dialog.dispose();
@@ -503,7 +670,7 @@ public class Buku extends JFrame {
                     dialog.dispose();
                 }
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Invalid number format in numeric fields!", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Invalid number format!", "Validation Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -512,119 +679,7 @@ public class Buku extends JFrame {
     }
     
     // --- Helper Select Methods ---
-    private void setSelectedPengarang(JComboBox<Pengarang.PengarangData> cmb, int id) {
-        for (int i = 0; i < cmb.getItemCount(); i++) {
-            if (cmb.getItemAt(i).getIdPengarang() == id) {
-                cmb.setSelectedIndex(i);
-                return;
-            }
-        }
-    }
-    private void setSelectedPenerbit(JComboBox<Penerbit.PenerbitData> cmb, int id) {
-        for (int i = 0; i < cmb.getItemCount(); i++) {
-            if (cmb.getItemAt(i).getIdPenerbit() == id) {
-                cmb.setSelectedIndex(i);
-                return;
-            }
-        }
-    }
-    private void setSelectedKategori(JComboBox<Kategori.KategoriData> cmb, int id) {
-        for (int i = 0; i < cmb.getItemCount(); i++) {
-            if (cmb.getItemAt(i).getIdKategori() == id) {
-                cmb.setSelectedIndex(i);
-                return;
-            }
-        }
-    }
-    private void setSelectedRak(JComboBox<Rak.RakData> cmb, int id) {
-        for (int i = 0; i < cmb.getItemCount(); i++) {
-            if (cmb.getItemAt(i).getIdRak() == id) {
-                cmb.setSelectedIndex(i);
-                return;
-            }
-        }
-    }
 
-    // --- FK Data Fetchers ---
-    // Note: These query the respective tables. Ideally this logic would be in their respective DAO classes,
-    // but for this direct implementation we can query here or reference if static methods existed.
-    // For simplicity and to avoid dependency on their instances, I will query directly here.
-    
-    private List<Pengarang.PengarangData> getPengarangList() {
-        List<Pengarang.PengarangData> list = new ArrayList<>();
-        String sql = "SELECT * FROM pengarang ORDER BY nama_pengarang";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                list.add(new Pengarang.PengarangData(
-                    rs.getInt("id_pengarang"),
-                    rs.getString("nama_pengarang"),
-                    rs.getString("negara"),
-                    rs.getString("biografi"),
-                    rs.getDate("tgl_lahir")
-                ));
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return list;
-    }
-
-    private List<Penerbit.PenerbitData> getPenerbitList() {
-        List<Penerbit.PenerbitData> list = new ArrayList<>();
-        String sql = "SELECT * FROM penerbit ORDER BY nama_penerbit";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                list.add(new Penerbit.PenerbitData(
-                    rs.getInt("id_penerbit"),
-                    rs.getString("nama_penerbit"),
-                    rs.getString("alamat"),
-                    rs.getString("kota"),
-                    rs.getString("no_telepon"),
-                    rs.getString("email")
-                ));
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return list;
-    }
-
-    private List<Kategori.KategoriData> getKategoriList() {
-        List<Kategori.KategoriData> list = new ArrayList<>();
-        String sql = "SELECT * FROM kategori ORDER BY nama_kategori";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                list.add(new Kategori.KategoriData(
-                    rs.getInt("id_kategori"),
-                    rs.getString("kode_kategori"),
-                    rs.getString("nama_kategori"),
-                    rs.getString("deskripsi")
-                ));
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return list;
-    }
-    
-    private List<Rak.RakData> getRakList() {
-        List<Rak.RakData> list = new ArrayList<>();
-        String sql = "SELECT * FROM rak ORDER BY kode_rak";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                list.add(new Rak.RakData(
-                    rs.getInt("id_rak"),
-                    rs.getString("kode_rak"),
-                    rs.getString("lokasi"),
-                    rs.getInt("kapasitas"),
-                    rs.getString("status")
-                ));
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return list;
-    }
 
     // =================================== DAO Logic ====================================
 
