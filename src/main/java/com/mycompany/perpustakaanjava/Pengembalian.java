@@ -420,7 +420,7 @@ public class Pengembalian extends JFrame {
         } else {
             dateChooserPengembalian.setDate(new Date()); // Default today
             txtHariTerlambat.setText("0");
-            txtTarifDenda.setText("1000"); // Example default
+            txtTarifDenda.setText("0"); 
             txtTotalDenda.setText("0");
         }
 
