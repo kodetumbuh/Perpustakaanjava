@@ -11,7 +11,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -34,16 +37,16 @@ public class Pengembalian extends JFrame {
         private Date tglPengembalian;
         private Date tglRencana; // From peminjaman, for calc
         private int hariTerlambat;
-        private double tarifDendaPerHari;
-        private double totalDenda;
+        private String tarifDendaPerHari; // Use String for formatting
+        private String totalDenda; // Use String for formatting
         private String kondisiBuku;
         private String statusPembayaran;
 
         public PengembalianData() {}
 
         public PengembalianData(int idPengembalian, int idPeminjaman, String noPeminjaman, int idUser, String username,
-                                Date tglPengembalian, Date tglRencana, int hariTerlambat, double tarifDendaPerHari,
-                                double totalDenda, String kondisiBuku, String statusPembayaran) {
+                                Date tglPengembalian, Date tglRencana, int hariTerlambat, String tarifDendaPerHari,
+                                String totalDenda, String kondisiBuku, String statusPembayaran) {
             this.idPengembalian = idPengembalian;
             this.idPeminjaman = idPeminjaman;
             this.noPeminjaman = noPeminjaman;
@@ -74,10 +77,10 @@ public class Pengembalian extends JFrame {
         public void setTglRencana(Date tglRencana) { this.tglRencana = tglRencana; }
         public int getHariTerlambat() { return hariTerlambat; }
         public void setHariTerlambat(int hariTerlambat) { this.hariTerlambat = hariTerlambat; }
-        public double getTarifDendaPerHari() { return tarifDendaPerHari; }
-        public void setTarifDendaPerHari(double tarifDendaPerHari) { this.tarifDendaPerHari = tarifDendaPerHari; }
-        public double getTotalDenda() { return totalDenda; }
-        public void setTotalDenda(double totalDenda) { this.totalDenda = totalDenda; }
+        public String getTarifDendaPerHari() { return tarifDendaPerHari; }
+        public void setTarifDendaPerHari(String tarifDendaPerHari) { this.tarifDendaPerHari = tarifDendaPerHari; }
+        public String getTotalDenda() { return totalDenda; }
+        public void setTotalDenda(String totalDenda) { this.totalDenda = totalDenda; }
         public String getKondisiBuku() { return kondisiBuku; }
         public void setKondisiBuku(String kondisiBuku) { this.kondisiBuku = kondisiBuku; }
         public String getStatusPembayaran() { return statusPembayaran; }
@@ -410,8 +413,8 @@ public class Pengembalian extends JFrame {
             dateChooserPengembalian.setDate(pengembalian.getTglPengembalian());
             dateChooserRencana.setDate(pengembalian.getTglRencana());
             txtHariTerlambat.setText(String.valueOf(pengembalian.getHariTerlambat()));
-            txtTarifDenda.setText(String.valueOf(pengembalian.getTarifDendaPerHari()));
-            txtTotalDenda.setText(String.valueOf(pengembalian.getTotalDenda()));
+            txtTarifDenda.setText(pengembalian.getTarifDendaPerHari());
+            txtTotalDenda.setText(pengembalian.getTotalDenda());
             cmbKondisiBuku.setSelectedItem(pengembalian.getKondisiBuku());
             cmbStatusPembayaran.setSelectedItem(pengembalian.getStatusPembayaran());
         } else {
@@ -481,12 +484,11 @@ public class Pengembalian extends JFrame {
             }
 
             int terlambat = 0;
-            double tarif = 0;
-            double total = 0;
+            // Removed double vars for tarif/total as they are strings now, handled below
             try {
                 terlambat = Integer.parseInt(strTerlambat);
-                tarif = Double.parseDouble(strTarif);
-                total = Double.parseDouble(strTotal);
+                Double.parseDouble(strTarif.replaceAll(",", "")); // Validate format
+                Double.parseDouble(strTotal.replaceAll(",", "")); // Validate format
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(dialog, "Invalid number format.");
                 return;
@@ -501,8 +503,8 @@ public class Pengembalian extends JFrame {
                 tglKembali,
                 tglRencana,
                 terlambat,
-                tarif,
-                total,
+                strTarif, // Store string
+                strTotal, // Store string
                 kondisi,
                 status
             );
@@ -531,8 +533,9 @@ public class Pengembalian extends JFrame {
             txtDays.setText(String.valueOf(days));
 
             try {
-                double tarif = Double.parseDouble(txtTarif.getText());
-                txtTotal.setText(String.valueOf(days * tarif));
+                double tarif = Double.parseDouble(txtTarif.getText().replaceAll(",", ""));
+                double total = days * tarif;
+                txtTotal.setText(NumberFormat.getNumberInstance(Locale.US).format(total));
             } catch (NumberFormatException e) {
                 // Ignore
             }
@@ -687,7 +690,10 @@ public class Pengembalian extends JFrame {
             sortOrder = "DESC"; // Default newest
         }
 
-        String sql = "SELECT pg.*, p.no_peminjaman, u.username " +
+        String sql = "SELECT pg.id_pengembalian, pg.id_peminjaman, pg.id_user, pg.tgl_pengembalian, pg.tgl_rencana, pg.hari_terlambat, " +
+                     "FORMAT(pg.tarif_denda_per_hari, 0) as tarif_denda_per_hari, " +
+                     "FORMAT(pg.total_denda, 0) as total_denda, " +
+                     "pg.kondisi_buku, pg.status_pembayaran, p.no_peminjaman, u.username " +
                      "FROM pengembalian pg " +
                      "LEFT JOIN peminjaman p ON pg.id_peminjaman = p.id_peminjaman " +
                      "LEFT JOIN user u ON pg.id_user = u.id_user ";
@@ -723,8 +729,8 @@ public class Pengembalian extends JFrame {
                         rs.getDate("tgl_pengembalian"),
                         rs.getDate("tgl_rencana"),
                         rs.getInt("hari_terlambat"),
-                        rs.getDouble("tarif_denda_per_hari"),
-                        rs.getDouble("total_denda"),
+                        rs.getString("tarif_denda_per_hari"),
+                        rs.getString("total_denda"),
                         rs.getString("kondisi_buku"),
                         rs.getString("status_pembayaran")
                     ));
@@ -778,8 +784,8 @@ public class Pengembalian extends JFrame {
             pstmt.setDate(3, new java.sql.Date(pg.getTglPengembalian().getTime()));
             pstmt.setDate(4, pg.getTglRencana() != null ? new java.sql.Date(pg.getTglRencana().getTime()) : null);
             pstmt.setInt(5, pg.getHariTerlambat());
-            pstmt.setDouble(6, pg.getTarifDendaPerHari());
-            pstmt.setDouble(7, pg.getTotalDenda());
+            pstmt.setDouble(6, Double.parseDouble(pg.getTarifDendaPerHari().replaceAll(",", "")));
+            pstmt.setDouble(7, Double.parseDouble(pg.getTotalDenda().replaceAll(",", "")));
             pstmt.setString(8, pg.getKondisiBuku());
             pstmt.setString(9, pg.getStatusPembayaran());
             pstmt.executeUpdate();
@@ -799,8 +805,8 @@ public class Pengembalian extends JFrame {
             pstmt.setDate(3, new java.sql.Date(pg.getTglPengembalian().getTime()));
             pstmt.setDate(4, pg.getTglRencana() != null ? new java.sql.Date(pg.getTglRencana().getTime()) : null);
             pstmt.setInt(5, pg.getHariTerlambat());
-            pstmt.setDouble(6, pg.getTarifDendaPerHari());
-            pstmt.setDouble(7, pg.getTotalDenda());
+            pstmt.setDouble(6, Double.parseDouble(pg.getTarifDendaPerHari().replaceAll(",", "")));
+            pstmt.setDouble(7, Double.parseDouble(pg.getTotalDenda().replaceAll(",", "")));
             pstmt.setString(8, pg.getKondisiBuku());
             pstmt.setString(9, pg.getStatusPembayaran());
             pstmt.setInt(10, pg.getIdPengembalian());
@@ -825,7 +831,10 @@ public class Pengembalian extends JFrame {
 
     private PengembalianData getPengembalianById(int id) {
         PengembalianData pg = null;
-        String sql = "SELECT pg.*, p.no_peminjaman, u.username " +
+        String sql = "SELECT pg.id_pengembalian, pg.id_peminjaman, pg.id_user, pg.tgl_pengembalian, pg.tgl_rencana, pg.hari_terlambat, " +
+                     "FORMAT(pg.tarif_denda_per_hari, 0) as tarif_denda_per_hari, " +
+                     "FORMAT(pg.total_denda, 0) as total_denda, " +
+                     "pg.kondisi_buku, pg.status_pembayaran, p.no_peminjaman, u.username " +
                      "FROM pengembalian pg " +
                      "LEFT JOIN peminjaman p ON pg.id_peminjaman = p.id_peminjaman " +
                      "LEFT JOIN user u ON pg.id_user = u.id_user " +
@@ -844,8 +853,8 @@ public class Pengembalian extends JFrame {
                         rs.getDate("tgl_pengembalian"),
                         rs.getDate("tgl_rencana"),
                         rs.getInt("hari_terlambat"),
-                        rs.getDouble("tarif_denda_per_hari"),
-                        rs.getDouble("total_denda"),
+                        rs.getString("tarif_denda_per_hari"),
+                        rs.getString("total_denda"),
                         rs.getString("kondisi_buku"),
                         rs.getString("status_pembayaran")
                     );
