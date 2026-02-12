@@ -11,7 +11,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.List;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+// Add missing PeminjamanItem/BukuItem if not static nested (they are nested below)
 
 /**
  * Main application frame for managing PeminjamanDetail.
@@ -295,36 +299,85 @@ public class PeminjamanDetail extends JFrame {
         dialog.setSize(400, 350);
         dialog.setLocationRelativeTo(this);
 
-        JComboBox<PeminjamanItem> cmbPeminjaman = new JComboBox<>();
-        JComboBox<BukuItem> cmbBuku = new JComboBox<>();
+        JTextField txtNoPeminjaman = new JTextField(20);
+        txtNoPeminjaman.setEditable(false);
+        
+        // Auto-Search Buku
+        JTextField txtBuku = new JTextField(20);
+        JPopupMenu popupBuku = new JPopupMenu();
+        final int[] selectedBukuId = new int[]{-1};
+        final int[] selectedPeminjamanId = new int[]{-1}; // Need to resolve ID from No Peminjaman
+
+        txtBuku.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+                String text = txtBuku.getText().trim();
+                if (text.length() < 1) {
+                    popupBuku.setVisible(false);
+                    return;
+                }
+                
+                // Search logic
+                List<BukuItem> results = searchBuku(text);
+                if (results.isEmpty()) {
+                    popupBuku.setVisible(false);
+                    return;
+                }
+                
+                popupBuku.removeAll();
+                for (BukuItem item : results) {
+                    JMenuItem menuItem = new JMenuItem(item.toString());
+                    menuItem.addActionListener(ev -> {
+                        txtBuku.setText(item.toString());
+                        selectedBukuId[0] = item.getId();
+                        popupBuku.setVisible(false);
+                    });
+                    popupBuku.add(menuItem);
+                }
+                
+                // Show popup below text field
+                if (!results.isEmpty()) {
+                    popupBuku.show(txtBuku, 0, txtBuku.getHeight());
+                    txtBuku.requestFocus();
+                }
+            }
+        });
+
+        // Use standard KeyListener for navigation/hiding if needed, but focus is key
+        
         JTextField txtQty = new JTextField(20);
         JTextField txtCatatan = new JTextField(20);
 
-        loadPeminjamanCombo(cmbPeminjaman);
-        loadBukuCombo(cmbBuku);
+        // Remove old loaders needed only if we fallback, but user wants text fields
+        // loadPeminjamanCombo(cmbPeminjaman); 
+        // loadBukuCombo(cmbBuku);
 
         if (detail != null) {
-            setSelectedPeminjaman(cmbPeminjaman, detail.getIdPeminjaman());
-            setSelectedBuku(cmbBuku, detail.getIdBuku());
+            txtNoPeminjaman.setText(detail.getNoPeminjaman());
+            selectedPeminjamanId[0] = detail.getIdPeminjaman();
+            
+            txtBuku.setText(detail.getJudulBuku());
+            selectedBukuId[0] = detail.getIdBuku();
+            
             txtQty.setText(String.valueOf(detail.getQty()));
             txtCatatan.setText(detail.getCatatan());
         } else {
              // Try to pre-select based on search filter if valid
-             String currentSearch = txtSearch.getText();
+             String currentSearch = txtSearch.getText().trim();
              if (!currentSearch.isEmpty()) {
-                 for (int i=0; i<cmbPeminjaman.getItemCount(); i++) {
-                     if (cmbPeminjaman.getItemAt(i).toString().trim().equals(currentSearch.trim())) {
-                         cmbPeminjaman.setSelectedIndex(i);
-                         break;
-                     }
+                 txtNoPeminjaman.setText(currentSearch);
+                 // Resolve ID
+                 int pId = getPeminjamanIdByNo(currentSearch);
+                 if (pId != -1) {
+                     selectedPeminjamanId[0] = pId;
                  }
              }
         }
 
         dialog.add(new JLabel("No Peminjaman:"));
-        dialog.add(cmbPeminjaman, "wrap, growx");
-        dialog.add(new JLabel("Buku:"));
-        dialog.add(cmbBuku, "wrap, growx");
+        dialog.add(txtNoPeminjaman, "wrap, growx");
+        dialog.add(new JLabel("Buku (Type to Search):"));
+        dialog.add(txtBuku, "wrap, growx");
         dialog.add(new JLabel("Qty:"));
         dialog.add(txtQty, "wrap, growx");
         dialog.add(new JLabel("Catatan:"));
@@ -332,13 +385,19 @@ public class PeminjamanDetail extends JFrame {
 
         JButton btnSave = new JButton("Save");
         btnSave.addActionListener(e -> {
-            PeminjamanItem selectedPeminjaman = (PeminjamanItem) cmbPeminjaman.getSelectedItem();
-            BukuItem selectedBuku = (BukuItem) cmbBuku.getSelectedItem();
+            int pId = selectedPeminjamanId[0];
+            int bId = selectedBukuId[0];
             String strQty = txtQty.getText();
             String catatan = txtCatatan.getText();
 
-            if (selectedPeminjaman == null || selectedBuku == null || strQty.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Please fill in all required fields.");
+            if (pId == -1) {
+                // Try to resolve again if needed (e.g. if passed as string but regex check failed earlier)
+                String no = txtNoPeminjaman.getText().trim();
+                pId = getPeminjamanIdByNo(no);
+            }
+
+            if (pId == -1 || bId == -1 || strQty.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Please fill in all required fields (Valid No Peminjaman & Buku).");
                 return;
             }
 
@@ -352,9 +411,9 @@ public class PeminjamanDetail extends JFrame {
 
             PeminjamanDetailData newDetail = new PeminjamanDetailData(
                 (detail == null) ? 0 : detail.getIdDetail(),
-                selectedPeminjaman.getId(),
+                pId,
                 "", // No handled by DB/DAO on reload
-                selectedBuku.getId(),
+                bId,
                 "", // Judul handled by DB/DAO on reload
                 qty,
                 catatan
@@ -387,18 +446,39 @@ public class PeminjamanDetail extends JFrame {
         }
     }
 
-    private void loadBukuCombo(JComboBox<BukuItem> cmb) {
-        cmb.removeAllItems();
-        String sql = "SELECT id_buku, judul FROM buku ORDER BY judul ASC";
+    // Helper Method to Search Buku (Limit 10)
+    private List<BukuItem> searchBuku(String keyword) {
+        List<BukuItem> list = new ArrayList<>();
+        String sql = "SELECT id_buku, judul FROM buku WHERE judul LIKE ? ORDER BY judul ASC LIMIT 10";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                cmb.addItem(new BukuItem(rs.getInt("id_buku"), rs.getString("judul")));
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + keyword + "%");
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new BukuItem(rs.getInt("id_buku"), rs.getString("judul")));
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return list;
+    }
+
+    private int getPeminjamanIdByNo(String noPeminjaman) {
+        int id = -1;
+        String sql = "SELECT id_peminjaman FROM peminjaman WHERE no_peminjaman = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, noPeminjaman);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    id = rs.getInt("id_peminjaman");
+                }
+            }
+        } catch (SQLException e) {
+             e.printStackTrace();
+        }
+        return id;
     }
 
     private void setSelectedPeminjaman(JComboBox<PeminjamanItem> cmb, int id) {
