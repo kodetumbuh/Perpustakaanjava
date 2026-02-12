@@ -15,11 +15,9 @@ import java.util.List;
 import java.util.Date;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JComboBox;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import java.util.function.Function;
+import javax.swing.SwingUtilities;
+import javax.swing.DefaultComboBoxModel;
 
 /**
  * Main application frame for managing Buku.
@@ -366,7 +364,7 @@ public class Buku extends JFrame {
                    }
                    char c = e.getKeyChar();
                    if (!Character.isLetterOrDigit(c) && c != KeyEvent.VK_BACK_SPACE && c != KeyEvent.VK_DELETE && c != ' ') {
-                       // 
+                       // ignore
                    }
 
                    SwingUtilities.invokeLater(() -> {
@@ -380,10 +378,22 @@ public class Buku extends JFrame {
                        isFiredByKeyboard = false;
                    });
                 }
+                
                 @Override
                 public void keyPressed(KeyEvent e) {
-                    if (e.getKeyCode() == KeyEvent.VK_DOWN && !isPopupVisible()) {
-                        showPopup();
+                    if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                         if (!isPopupVisible()) {
+                             showPopup();
+                         }
+                    }
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        if (isPopupVisible()) {
+                             Object selected = getSelectedItem();
+                             if (selected != null) {
+                                 editor.setText(selected.toString());
+                                 hidePopup();
+                             }
+                        }
                     }
                 }
             });
@@ -398,6 +408,7 @@ public class Buku extends JFrame {
             }
             JTextField editor = (JTextField) getEditor().getEditorComponent();
             editor.setText(text);
+            editor.setCaretPosition(text.length()); // Maintain cursor position
             if (model.getSize() > 0) {
                 showPopup();
             } else {
@@ -406,7 +417,7 @@ public class Buku extends JFrame {
         }
     }
     
-    // --- Autocomplete Search Helpers (LIMIT 10) ---
+    // --- Autocomplete Helper Methods (Direct DB Queries Limit 10) ---
     private List<Pengarang.PengarangData> searchPengarang(String keyword) {
         List<Pengarang.PengarangData> list = new ArrayList<>();
         String sql = "SELECT * FROM pengarang WHERE nama_pengarang LIKE ? LIMIT 10";
@@ -424,7 +435,7 @@ public class Buku extends JFrame {
         } catch (SQLException e) { e.printStackTrace(); }
         return list;
     }
-    private List<Penerbit.PenerbitData> searchPenerbit(String keyword) {
+     private List<Penerbit.PenerbitData> searchPenerbit(String keyword) {
         List<Penerbit.PenerbitData> list = new ArrayList<>();
         String sql = "SELECT * FROM penerbit WHERE nama_penerbit LIKE ? LIMIT 10";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -441,7 +452,7 @@ public class Buku extends JFrame {
         } catch (SQLException e) { e.printStackTrace(); }
         return list;
     }
-    private List<Kategori.KategoriData> searchKategori(String keyword) {
+     private List<Kategori.KategoriData> searchKategori(String keyword) {
         List<Kategori.KategoriData> list = new ArrayList<>();
         String sql = "SELECT * FROM kategori WHERE nama_kategori LIKE ? LIMIT 10";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -458,7 +469,7 @@ public class Buku extends JFrame {
         } catch (SQLException e) { e.printStackTrace(); }
         return list;
     }
-    private List<Rak.RakData> searchRak(String keyword) {
+     private List<Rak.RakData> searchRak(String keyword) {
         List<Rak.RakData> list = new ArrayList<>();
         String sql = "SELECT * FROM rak WHERE lokasi LIKE ? OR kode_rak LIKE ? LIMIT 10";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -481,11 +492,6 @@ public class Buku extends JFrame {
         JDialog dialog = new JDialog(this, buku == null ? "Add Buku" : "Edit Buku", true);
         dialog.setLayout(new MigLayout("fill, insets 20", "[][grow][][grow]", "[]")); // 4 columns for grid layout
         dialog.setSize(800, 600);
-        dialog.setLocationRelativeTo(this);
-
-       
-        dialog.setLayout(new MigLayout("fill, insets 20", "[][grow]", "[]"));
-        dialog.setSize(600, 600); // Taller
         dialog.setLocationRelativeTo(this);
 
         JTextField txtISBN = new JTextField(20);
@@ -517,8 +523,7 @@ public class Buku extends JFrame {
             txtISBN.setText(buku.getIsbn());
             txtJudul.setText(buku.getJudul());
             
-            // Pre-fill ComboBoxes (Synthesize logic or fetch if simpler)
-            // Using skeletons for correct ID and toString
+            // Pre-fill ComboBoxes (Create dummy objects with ID and Name for display)
             Pengarang.PengarangData p = new Pengarang.PengarangData(); p.setIdPengarang(buku.getIdPengarang()); p.setNamaPengarang(buku.getNamaPengarang());
             cmbPengarang.addItem(p); cmbPengarang.setSelectedItem(p);
             
@@ -528,13 +533,7 @@ public class Buku extends JFrame {
             Kategori.KategoriData k = new Kategori.KategoriData(); k.setIdKategori(buku.getIdKategori()); k.setNamaKategori(buku.getNamaKategori());
             cmbKategori.addItem(k); cmbKategori.setSelectedItem(k);
             
-            Rak.RakData r = new Rak.RakData(); r.setIdRak(buku.getIdRak()); 
-            // Attempt to restore string. Assuming getLokasiRak() holds display string.
-            // But Rak.toString() is kode + " - " + lokasi.
-            // If getLokasiRak() is "A1 - Lt1", we can parse or just use it as string in editor if we don't care about object fields for display.
-            // For now, let's keep it simple: create skeleton with empty fields but override toString() locally? No, Java doesn't support easy anon for FK data struct.
-            // We just populate fields best effort.
-            r.setKodeRak(""); r.setLokasi(buku.getLokasiRak()); // Will show " - Location"
+            Rak.RakData r = new Rak.RakData(); r.setIdRak(buku.getIdRak()); r.setLokasi(buku.getLokasiRak()); r.setKodeRak("");
             cmbRak.addItem(r); cmbRak.setSelectedItem(r);
             
             txtTahun.setText(String.valueOf(buku.getTahunTerbit()));
@@ -551,12 +550,14 @@ public class Buku extends JFrame {
             }
             cmbStatus.setSelectedItem(buku.getStatus());
         } else {
+             // Defaults
              txtStokTotal.setText("0");
              txtStokTersedia.setText("0");
              txtHarga.setText("0");
              dateChooser.setDate(new Date());
         }
 
+        // Layout Components
         dialog.add(new JLabel("ISBN:"));
         dialog.add(txtISBN, "growx");
         dialog.add(new JLabel("Judul:"));
@@ -608,6 +609,7 @@ public class Buku extends JFrame {
                 String isbn = txtISBN.getText();
                 String judul = txtJudul.getText();
                 
+                // Get IDs from ComboBoxes
                 int idPengarang = 0;
                 Object pObj = cmbPengarang.getSelectedItem();
                 if (pObj instanceof Pengarang.PengarangData) idPengarang = ((Pengarang.PengarangData)pObj).getIdPengarang();
@@ -623,11 +625,6 @@ public class Buku extends JFrame {
                 int idRak = 0;
                 Object rObj = cmbRak.getSelectedItem();
                 if (rObj instanceof Rak.RakData) idRak = ((Rak.RakData)rObj).getIdRak();
-                
-                if (idPengarang == 0 || idPenerbit == 0 || idKategori == 0 || idRak == 0) {
-                     JOptionPane.showMessageDialog(dialog, "Please select valid Pengarang, Penerbit, Kategori, and Rak.", "Validation Error", JOptionPane.WARNING_MESSAGE);
-                     return;
-                }
 
                 int tahun = Integer.parseInt(txtTahun.getText());
                 String edisi = txtEdisi.getText();
@@ -640,6 +637,12 @@ public class Buku extends JFrame {
                 java.util.Date utilDate = dateChooser.getDate();
                 java.sql.Date tglMasuk = (utilDate != null) ? new java.sql.Date(utilDate.getTime()) : null;
                 String status = (String) cmbStatus.getSelectedItem();
+                
+                // Validation (minimal)
+                if (idPengarang == 0 || idPenerbit == 0 || idKategori == 0 || idRak == 0) {
+                     JOptionPane.showMessageDialog(dialog, "Please select valid Pengarang, Penerbit, Kategori, and Rak.", "Validation Error", JOptionPane.WARNING_MESSAGE);
+                     return;
+                }
 
                 BukuData newBuku = new BukuData(
                     (buku == null) ? 0 : buku.getIdBuku(),
@@ -650,13 +653,16 @@ public class Buku extends JFrame {
                 if (buku == null) {
                     saveBuku(newBuku);
                     loadData();
+
                     if (chkKeepOpen.isSelected()) {
                         txtISBN.setText("");
                         txtJudul.setText("");
+                        // Reset ComboBoxes
                         cmbPengarang.setSelectedIndex(-1);
                         cmbPenerbit.setSelectedIndex(-1);
                         cmbKategori.setSelectedIndex(-1);
                         cmbRak.setSelectedIndex(-1);
+                        
                         txtStokTotal.setText("0");
                         txtStokTersedia.setText("0");
                         txtHarga.setText("0");
@@ -670,16 +676,16 @@ public class Buku extends JFrame {
                     dialog.dispose();
                 }
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dialog, "Invalid number format!", "Validation Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Invalid number format in numeric fields!", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(dialog, "Error saving data: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
         dialog.add(btnSave, "span, align right");
         dialog.setVisible(true);
     }
-    
-    // --- Helper Select Methods ---
-
 
     // =================================== DAO Logic ====================================
 
