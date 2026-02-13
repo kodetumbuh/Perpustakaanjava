@@ -51,7 +51,7 @@ public class Dashboard extends JFrame {
     }
 
     private void initUI() {
-        setLayout(new MigLayout("fillx, insets 10, aligny top", "[grow]", "[]0[]")); // Modified layout to align top
+        setLayout(new MigLayout("fill, insets 10, aligny top", "[grow]", "[]0[]0[grow]0[]")); // Modified layout to fill and have grow row
 
         // === Header / Control Section ===
         // Set insets to 0 to remove padding
@@ -92,7 +92,7 @@ public class Dashboard extends JFrame {
         table = new JTable(tableModel);
         
         JScrollPane scrollPane = new JScrollPane(table);
-        add(scrollPane, "growx, h 200!, wrap");
+        add(scrollPane, "grow, pushy, wrap");
         
         // === Pagination Section ===
         add(createPaginationPanel(), "center");
