@@ -472,7 +472,7 @@ public class Dashboard extends JFrame {
         JMenuItem itemLogout = new JMenuItem("Logout");
 
         
-        itemPengaturanTema.addActionListener(e -> JOptionPane.showMessageDialog(this, "Fitur Tema belum tersedia."));
+        itemPengaturanTema.addActionListener(e -> new SelectTheme().setVisible(true));
         
         // Settings Listeners
         itemLogout.addActionListener(e -> {
@@ -502,16 +502,23 @@ public class Dashboard extends JFrame {
 
     // --- Main Method ---
     public static void main(String[] args) {
-        // Set Look and Feel (Optional, makes it look better)
+        // Set Look and Feel from Preferences
         try {
-            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
+            String theme = java.util.prefs.Preferences.userNodeForPackage(SelectTheme.class)
+                    .get("AppTheme", "javax.swing.plaf.nimbus.NimbusLookAndFeel"); // Default to Nimbus if not set
+            UIManager.setLookAndFeel(theme);
         } catch (Exception e) {
-            // Ignore
+            // Fallback to Nimbus if preference fails
+            try {
+                for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                    if ("Nimbus".equals(info.getName())) {
+                        UIManager.setLookAndFeel(info.getClassName());
+                        break;
+                    }
+                }
+            } catch (Exception ex) {
+                // Ignore
+            }
         }
 
         SwingUtilities.invokeLater(() -> {
