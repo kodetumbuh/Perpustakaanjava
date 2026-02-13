@@ -2,10 +2,39 @@ package com.mycompany.perpustakaanjava;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import net.miginfocom.swing.MigLayout;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.DefaultCategoryDataset;
+import javax.swing.table.DefaultTableModel;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Dashboard extends JFrame {
+
+    private JComboBox<String> cmbPeriode;
+    private JPanel pnlChart;
+    
+    // UI Table Components
+    private javax.swing.JTable table;
+    private DefaultTableModel tableModel;
+    
+    // Pagination UI
+    private JButton btnPrevious;
+    private JButton btnNext;
+    private JComboBox<Integer> cmbPageSize;
+    private JLabel lblPageInfo;
+    
+    // Pagination State
+    private int currentPage = 1;
+    private int totalRecords = 0;
 
     public Dashboard() {
         // 1. Pengaturan Window Otomatis Full Screen (Maximized)
@@ -17,7 +46,252 @@ public class Dashboard extends JFrame {
         // 2. Inisialisasi Menu Bar
         initMenuBar();
 
-        // 3. Konten Utama (Wallpaper Full Screen)
+        // 3. Konten Utama
+        initUI();
+    }
+
+    private void initUI() {
+        setLayout(new MigLayout("fillx, insets 10, aligny top", "[grow]", "[]0[]")); // Modified layout to align top
+
+        // === Header / Control Section ===
+        // Set insets to 0 to remove padding
+        JPanel pnlHeader = new JPanel(new MigLayout("insets 0", "[][][]", "[]"));
+        
+        JLabel lblPeriode = new JLabel("Pilih Periode:");
+        lblPeriode.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        
+        cmbPeriode = new JComboBox<>(new String[]{"Mingguan", "Bulanan", "Tahunan"});
+        cmbPeriode.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        
+        // Listener untuk mengubah chart saat combobox berubah
+        cmbPeriode.addActionListener(e -> refreshChart((String) cmbPeriode.getSelectedItem()));
+
+        pnlHeader.add(lblPeriode, "gapright 10");
+        pnlHeader.add(cmbPeriode);
+
+        // Gap below header set to 0
+        add(pnlHeader, "wrap, growx, gapbottom 0");
+
+        // === Chart Section ===
+        pnlChart = new JPanel(new BorderLayout());
+        pnlChart.setBorder(BorderFactory.createEtchedBorder());
+        // Updated to full width (growx) and smaller height (300px), with gaptop 0, aligny top
+        add(pnlChart, "growx, h 300!, gaptop 20, gapbottom 20, wrap");
+
+        // Load Default Chart (Mingguan)
+        refreshChart("Mingguan");
+        
+        // === Table Section ===
+        String[] columnNames = {"Nama Peminjam", "Nama Buku", "Status", "Tgl Pinjam", "Tgl Kembali (Rencana)", "Tgl Kembali (Aktual)"};
+        tableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        table = new JTable(tableModel);
+        
+        JScrollPane scrollPane = new JScrollPane(table);
+        add(scrollPane, "growx, h 200!, wrap");
+        
+        // === Pagination Section ===
+        add(createPaginationPanel(), "center");
+        
+        // Load Initial Table Data
+        loadTableData();
+    }
+
+    private void refreshChart(String period) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        String sql = "";
+        String dateLabelFormat = "";
+
+        // Tentukan Query SQL Berdasarkan Periode
+        if ("Mingguan".equals(period)) {
+            // 7 Hari Terakhir (Harian)
+            sql = "SELECT tgl_peminjaman as periode, COUNT(*) as jumlah FROM peminjaman " +
+                  "WHERE tgl_peminjaman >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) " +
+                  "GROUP BY tgl_peminjaman " +
+                  "ORDER BY tgl_peminjaman ASC";
+            dateLabelFormat = "dd MMM"; 
+        } else if ("Bulanan".equals(period)) {
+            // 1 Bulan Terakhir (Harian) - Updated: 1 MONTH interval
+            sql = "SELECT tgl_peminjaman as periode, COUNT(*) as jumlah FROM peminjaman " +
+                  "WHERE tgl_peminjaman >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH) " +
+                  "GROUP BY tgl_peminjaman " +
+                  "ORDER BY tgl_peminjaman ASC";
+            dateLabelFormat = "dd MMM";
+        } else if ("Tahunan".equals(period)) {
+            // 1 Tahun Terakhir (Bulanan)
+            sql = "SELECT DATE_FORMAT(tgl_peminjaman, '%Y-%m-01') as periode, COUNT(*) as jumlah FROM peminjaman " +
+                  "WHERE tgl_peminjaman >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) " +
+                  "GROUP BY DATE_FORMAT(tgl_peminjaman, '%Y-%m') " +
+                  "ORDER BY periode ASC";
+            dateLabelFormat = "MMMM yyyy";
+        }
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            SimpleDateFormat sdfInput = new SimpleDateFormat("yyyy-MM-dd");
+            SimpleDateFormat sdfLabel = new SimpleDateFormat(dateLabelFormat, new java.util.Locale("id")); // Bahasa Indonesia
+
+            while (rs.next()) {
+                String rawDate = rs.getString("periode");
+                int count = rs.getInt("jumlah");
+                
+                String label = rawDate;
+                try {
+                    // Coba format tanggal agar lebiih cantik
+                    if (rawDate != null) {
+                        label = sdfLabel.format(sdfInput.parse(rawDate));
+                    }
+                } catch (Exception e) {
+                    // Fallback jika parsing gagal
+                    label = rawDate;
+                }
+
+                dataset.addValue(count, "Peminjaman", label);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error fetching chart data: " + e.getMessage());
+        }
+
+        // Buat Chart
+        JFreeChart chart = ChartFactory.createBarChart(
+            "Statistik Peminjaman (" + period + ")", // Judul Chart
+            "Periode", // Label Sumbu X
+            "Jumlah Peminjaman", // Label Sumbu Y
+            dataset, // Dataset
+            PlotOrientation.VERTICAL,
+            false, // Legend
+            true, // Tooltips
+            false // URLs
+        );
+
+        // Customisasi Chart agar lebih cantik
+        chart.setBackgroundPaint(new Color(240, 240, 240));
+        chart.getTitle().setFont(new Font("SansSerif", Font.BOLD, 18));
+
+        // Konfigurasi Axis agar hanya menampilkan bilangan bulat (Integer)
+        org.jfree.chart.plot.CategoryPlot plot = chart.getCategoryPlot();
+        org.jfree.chart.axis.NumberAxis rangeAxis = (org.jfree.chart.axis.NumberAxis) plot.getRangeAxis();
+        rangeAxis.setStandardTickUnits(org.jfree.chart.axis.NumberAxis.createIntegerTickUnits());
+        
+        // Buat Panel Chart dengan ukuran custom
+        ChartPanel chartPanel = new ChartPanel(chart);
+        chartPanel.setMouseWheelEnabled(true);
+        chartPanel.setPreferredSize(new Dimension(1200, 300)); // Wide width, short height
+
+        // Update Panel
+        pnlChart.removeAll();
+        pnlChart.add(chartPanel, BorderLayout.CENTER);
+        pnlChart.revalidate();
+        pnlChart.repaint();
+    }
+
+
+    
+    // --- Pagination Methods ---
+    private JPanel createPaginationPanel() {
+        JPanel pnlPagination = new JPanel(new MigLayout("", "[][push][]", "[]"));
+        
+        btnPrevious = new JButton("Previous");
+        btnNext = new JButton("Next");
+        Integer[] pageSizes = {10, 25, 50, 100};
+        cmbPageSize = new JComboBox<>(pageSizes);
+        lblPageInfo = new JLabel("Page 1");
+
+        btnPrevious.addActionListener(e -> {
+            currentPage--;
+            loadTableData();
+        });
+        
+        btnNext.addActionListener(e -> {
+            currentPage++;
+            loadTableData();
+        });
+        
+        cmbPageSize.addActionListener(e -> {
+            currentPage = 1;
+            loadTableData();
+        });
+
+        pnlPagination.add(new JLabel("Rows per page:"));
+        pnlPagination.add(cmbPageSize);
+        pnlPagination.add(lblPageInfo, "gapleft 20");
+        pnlPagination.add(btnPrevious, "gapleft push");
+        pnlPagination.add(btnNext);
+        
+        return pnlPagination;
+    }
+    
+    private void updatePageInfo(int currentPage, int totalPages, int totalRecords) {
+        lblPageInfo.setText(String.format("Page %d of %d (Total: %d)", currentPage, totalPages, totalRecords));
+        btnPrevious.setEnabled(currentPage > 1);
+        btnNext.setEnabled(currentPage < totalPages);
+    }
+    
+    private void loadTableData() {
+        int pageSize = (int) cmbPageSize.getSelectedItem();
+        int offset = (currentPage - 1) * pageSize;
+        
+        // Query dengan JOIN
+        String sql = "SELECT a.nama as nama_peminjam, b.judul as nama_buku, p.status, p.tgl_peminjaman, p.tgl_kembali_rencana, p.tgl_kembali_aktual " +
+                     "FROM peminjaman_detail pd " +
+                     "JOIN peminjaman p ON pd.id_peminjaman = p.id_peminjaman " +
+                     "JOIN anggota a ON p.id_anggota = a.id_anggota " +
+                     "JOIN buku b ON pd.id_buku = b.id_buku " + // Fixed Join condition
+                     "ORDER BY p.tgl_peminjaman DESC " +
+                     "LIMIT ? OFFSET ?";
+
+        totalRecords = getPeminjamanDetailTotalCount();
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, pageSize);
+            pstmt.setInt(2, offset);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                tableModel.setRowCount(0);
+                while (rs.next()) {
+                    tableModel.addRow(new Object[]{
+                        rs.getString("nama_peminjam"),
+                        rs.getString("nama_buku"),
+                        rs.getString("status"),
+                        rs.getDate("tgl_peminjaman"),
+                        rs.getDate("tgl_kembali_rencana"),
+                        rs.getDate("tgl_kembali_aktual")
+                    });
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error fetching table data: " + e.getMessage());
+        }
+        
+        int totalPages = (int) Math.ceil((double) totalRecords / pageSize);
+        if (totalPages == 0) totalPages = 1;
+        updatePageInfo(currentPage, totalPages, totalRecords);
+    }
+    
+    private int getPeminjamanDetailTotalCount() {
+        int count = 0;
+        String sql = "SELECT COUNT(*) FROM peminjaman_detail";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return count;
     }
 
 
@@ -96,6 +370,13 @@ public class Dashboard extends JFrame {
             Peminjaman f = new Peminjaman();
             f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             f.setVisible(true);
+            // Refresh chart saat window peminjaman ditutup (opsional, jika ingin real-time update)
+            f.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosed(java.awt.event.WindowEvent windowEvent) {
+                    refreshChart((String) cmbPeriode.getSelectedItem());
+                }
+            });
         });
         
         itemPeminjamanDetail.addActionListener(e -> {
@@ -208,6 +489,18 @@ public class Dashboard extends JFrame {
 
     // --- Main Method ---
     public static void main(String[] args) {
+        // Set Look and Feel (Optional, makes it look better)
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            // Ignore
+        }
+
         SwingUtilities.invokeLater(() -> {
             new Dashboard().setVisible(true);
         });
