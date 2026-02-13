@@ -174,7 +174,7 @@ public class Dashboard extends JFrame {
 
         // Customize Chart for better aesthetics
         chart.setBackgroundPaint(new Color(240, 240, 240));
-        chart.getTitle().setFont(new Font("SansSerif", Font.BOLD, 18));
+        chart.getTitle().setFont(new Font("SansSerif", Font.PLAIN, 15));
 
         // Configure Axis to show only integers
         org.jfree.chart.plot.CategoryPlot plot = chart.getCategoryPlot();
@@ -184,7 +184,7 @@ public class Dashboard extends JFrame {
         // Create Chart Panel with custom size
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setMouseWheelEnabled(true);
-        chartPanel.setPreferredSize(new Dimension(1200, 300)); // Wide width, short height
+        chartPanel.setPreferredSize(new Dimension(1200, 400)); // Wide width, short height
 
         // Update Panel
         pnlChart.removeAll();
@@ -409,8 +409,11 @@ public class Dashboard extends JFrame {
         JMenuItem itemLaporanAuditBuku = new JMenuItem("Laporan Audit Buku");
         JMenuItem itemLaporanDenda = new JMenuItem("Laporan Denda");
         
-        // Report Listeners (Placeholder)
-        itemLaporanBulan.addActionListener(e -> JOptionPane.showMessageDialog(this, "Fitur Laporan belum tersedia."));
+        // Report Listeners
+        itemLaporanBulan.addActionListener(e -> {
+            LaporanBuku f = new LaporanBuku();
+            f.setVisible(true);
+        });
         
         MenuLaporan.add(itemLaporanBulan);
         MenuLaporan.add(itemLaporanPengembalian);
@@ -458,6 +461,11 @@ public class Dashboard extends JFrame {
         JMenuItem itemPengaturanTema = new JMenuItem("Tema Windows");
         JMenuItem itemPengaturanBackup = new JMenuItem("Backup Data");
         JMenuItem itemLogout = new JMenuItem("Logout");
+        // Report Listeners
+        itemLaporanBulan.addActionListener(e -> {
+            LaporanBuku f = new LaporanBuku();
+            f.setVisible(true);
+        });
         
         itemPengaturanTema.addActionListener(e -> JOptionPane.showMessageDialog(this, "Fitur Tema belum tersedia."));
         
