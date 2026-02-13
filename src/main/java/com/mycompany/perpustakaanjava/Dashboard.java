@@ -177,7 +177,6 @@ public class Dashboard extends JFrame {
         JMenuItem itemPengaturanTema = new JMenuItem("Tema Windows");
         JMenuItem itemPengaturanBackup = new JMenuItem("Backup Data");
         JMenuItem itemLogout = new JMenuItem("Logout");
-        JMenuItem itemExit = new JMenuItem("Keluar Aplikasi");
         
         itemPengaturanTema.addActionListener(e -> JOptionPane.showMessageDialog(this, "Fitur Tema belum tersedia."));
         
@@ -186,16 +185,14 @@ public class Dashboard extends JFrame {
             int confirm = JOptionPane.showConfirmDialog(this, "Apakah Anda yakin ingin logout?", "Logout", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
                 this.dispose();
-                new LoginForm().setVisible(true);
             }
         });
-        itemExit.addActionListener(e -> System.exit(0));
+
 
         MenuPengaturan.add(itemPengaturanTema);
         MenuPengaturan.add(itemPengaturanBackup);
         MenuPengaturan.addSeparator();
         MenuPengaturan.add(itemLogout);
-        MenuPengaturan.add(itemExit);
 
         // --- MEMASUKKAN SEMUA MENU KE BAR ---
         menuBar.add(MenuDataMaster);
