@@ -37,16 +37,16 @@ public class Dashboard extends JFrame {
     private int totalRecords = 0;
 
     public Dashboard() {
-        // 1. Pengaturan Window Otomatis Full Screen (Maximized)
+        // 1. Auto Full Screen Window Settings (Maximized)
         setTitle("Dashboard Utama - Perpustakaan");
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // 2. Inisialisasi Menu Bar
+        // 2. Initialize Menu Bar
         initMenuBar();
 
-        // 3. Konten Utama
+        // 3. Main Content
         initUI();
     }
 
@@ -63,7 +63,7 @@ public class Dashboard extends JFrame {
         cmbPeriode = new JComboBox<>(new String[]{"Mingguan", "Bulanan", "Tahunan"});
         cmbPeriode.setFont(new Font("SansSerif", Font.PLAIN, 14));
         
-        // Listener untuk mengubah chart saat combobox berubah
+        // Listener to update chart when combobox changes
         cmbPeriode.addActionListener(e -> refreshChart((String) cmbPeriode.getSelectedItem()));
 
         pnlHeader.add(lblPeriode, "gapright 10");
@@ -106,23 +106,23 @@ public class Dashboard extends JFrame {
         String sql = "";
         String dateLabelFormat = "";
 
-        // Tentukan Query SQL Berdasarkan Periode
+        // Determine SQL Query based on Period
         if ("Mingguan".equals(period)) {
-            // 7 Hari Terakhir (Harian)
+            // 7 Days (Daily)
             sql = "SELECT tgl_peminjaman as periode, COUNT(*) as jumlah FROM peminjaman " +
                   "WHERE tgl_peminjaman >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) " +
                   "GROUP BY tgl_peminjaman " +
                   "ORDER BY tgl_peminjaman ASC";
             dateLabelFormat = "dd MMM"; 
         } else if ("Bulanan".equals(period)) {
-            // 1 Bulan Terakhir (Harian) - Updated: 1 MONTH interval
+            // 1 Month (Daily) - Updated: 1 MONTH interval
             sql = "SELECT tgl_peminjaman as periode, COUNT(*) as jumlah FROM peminjaman " +
                   "WHERE tgl_peminjaman >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH) " +
                   "GROUP BY tgl_peminjaman " +
                   "ORDER BY tgl_peminjaman ASC";
             dateLabelFormat = "dd MMM";
         } else if ("Tahunan".equals(period)) {
-            // 1 Tahun Terakhir (Bulanan)
+            // 1 Year (Monthly)
             sql = "SELECT DATE_FORMAT(tgl_peminjaman, '%Y-%m-01') as periode, COUNT(*) as jumlah FROM peminjaman " +
                   "WHERE tgl_peminjaman >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) " +
                   "GROUP BY DATE_FORMAT(tgl_peminjaman, '%Y-%m') " +
@@ -135,7 +135,7 @@ public class Dashboard extends JFrame {
              ResultSet rs = pstmt.executeQuery()) {
 
             SimpleDateFormat sdfInput = new SimpleDateFormat("yyyy-MM-dd");
-            SimpleDateFormat sdfLabel = new SimpleDateFormat(dateLabelFormat, new java.util.Locale("id")); // Bahasa Indonesia
+            SimpleDateFormat sdfLabel = new SimpleDateFormat(dateLabelFormat, new java.util.Locale("id")); // Indonesian Locale
 
             while (rs.next()) {
                 String rawDate = rs.getString("periode");
@@ -143,12 +143,12 @@ public class Dashboard extends JFrame {
                 
                 String label = rawDate;
                 try {
-                    // Coba format tanggal agar lebiih cantik
+                    // Try to format date nicely
                     if (rawDate != null) {
                         label = sdfLabel.format(sdfInput.parse(rawDate));
                     }
                 } catch (Exception e) {
-                    // Fallback jika parsing gagal
+                    // Fallback if parsing fails
                     label = rawDate;
                 }
 
@@ -160,11 +160,11 @@ public class Dashboard extends JFrame {
             JOptionPane.showMessageDialog(this, "Error fetching chart data: " + e.getMessage());
         }
 
-        // Buat Chart
+        // Create Chart
         JFreeChart chart = ChartFactory.createBarChart(
-            "Statistik Peminjaman (" + period + ")", // Judul Chart
-            "Periode", // Label Sumbu X
-            "Jumlah Peminjaman", // Label Sumbu Y
+            "Statistik Peminjaman (" + period + ")", // Chart Title
+            "Periode", // X-Axis Label
+            "Jumlah Peminjaman", // Y-Axis Label
             dataset, // Dataset
             PlotOrientation.VERTICAL,
             false, // Legend
@@ -172,16 +172,16 @@ public class Dashboard extends JFrame {
             false // URLs
         );
 
-        // Customisasi Chart agar lebih cantik
+        // Customize Chart for better aesthetics
         chart.setBackgroundPaint(new Color(240, 240, 240));
         chart.getTitle().setFont(new Font("SansSerif", Font.BOLD, 18));
 
-        // Konfigurasi Axis agar hanya menampilkan bilangan bulat (Integer)
+        // Configure Axis to show only integers
         org.jfree.chart.plot.CategoryPlot plot = chart.getCategoryPlot();
         org.jfree.chart.axis.NumberAxis rangeAxis = (org.jfree.chart.axis.NumberAxis) plot.getRangeAxis();
         rangeAxis.setStandardTickUnits(org.jfree.chart.axis.NumberAxis.createIntegerTickUnits());
         
-        // Buat Panel Chart dengan ukuran custom
+        // Create Chart Panel with custom size
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setMouseWheelEnabled(true);
         chartPanel.setPreferredSize(new Dimension(1200, 300)); // Wide width, short height
@@ -239,7 +239,7 @@ public class Dashboard extends JFrame {
         int pageSize = (int) cmbPageSize.getSelectedItem();
         int offset = (currentPage - 1) * pageSize;
         
-        // Query dengan JOIN
+        // Query with JOIN
         String sql = "SELECT a.nama as nama_peminjam, b.judul as nama_buku, p.status, p.tgl_peminjaman, p.tgl_kembali_rencana, p.tgl_kembali_aktual " +
                      "FROM peminjaman_detail pd " +
                      "JOIN peminjaman p ON pd.id_peminjaman = p.id_peminjaman " +
@@ -298,7 +298,7 @@ public class Dashboard extends JFrame {
     private void initMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
-        // --- DEFINISI MENU UTAMA ---
+        // --- MAIN MENU DEFINITION ---
         JMenu MenuDataMaster = new JMenu("Master Data");
         JMenu MenuAktifitas = new JMenu("Aktifitas");
         JMenu MenuLaporan = new JMenu("Laporan");
@@ -307,7 +307,7 @@ public class Dashboard extends JFrame {
         JMenu MenuAdministrasi = new JMenu("Administrasi"); 
         JMenu MenuPengaturan = new JMenu("Pengaturan");       
 
-        // ======================= 1. MENU MASTER DATA =======================
+        // ======================= 1. MASTER DATA MENU =======================
         JMenuItem itemAnggota = new JMenuItem("Anggota");
         JMenuItem itemBuku = new JMenuItem("Buku");
         JMenuItem itemKategori = new JMenuItem("Kategori");
@@ -315,7 +315,7 @@ public class Dashboard extends JFrame {
         JMenuItem itemPengarang = new JMenuItem("Pengarang");
         JMenuItem itemRak = new JMenuItem("Rak Lemari");
         
-        // Listeners Master Data
+        // Master Data Listeners
         itemAnggota.addActionListener(e -> {
             Anggota f = new Anggota();
             f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -359,18 +359,18 @@ public class Dashboard extends JFrame {
         MenuDataMaster.add(itemPengarang);
         MenuDataMaster.add(itemRak);
 
-        // ======================= 2. MENU AKTIFITAS =======================
+        // ======================= 2. ACTIVITY MENU =======================
         JMenuItem itemPeminjaman = new JMenuItem("Peminjaman Buku");
         JMenuItem itemPeminjamanDetail = new JMenuItem("Peminjaman Buku Detail");
         JMenuItem itemPengembalian = new JMenuItem("Pengembalian");
         JMenuItem itemReservasi = new JMenuItem("Reservasi");
         
-        // Listeners Aktifitas
+        // Activity Listeners
         itemPeminjaman.addActionListener(e -> {
             Peminjaman f = new Peminjaman();
             f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             f.setVisible(true);
-            // Refresh chart saat window peminjaman ditutup (opsional, jika ingin real-time update)
+            // Refresh chart when borrowing window is closed (optional, for real-time update)
             f.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosed(java.awt.event.WindowEvent windowEvent) {
@@ -402,14 +402,14 @@ public class Dashboard extends JFrame {
         MenuAktifitas.add(itemPengembalian); 
         MenuAktifitas.add(itemReservasi); 
         
-        // ======================= 3. MENU LAPORAN =======================
+        // ======================= 3. REPORT MENU =======================
         JMenuItem itemLaporanBulan = new JMenuItem("Laporan Peminjaman Buku");
         JMenuItem itemLaporanPengembalian = new JMenuItem("Laporan Pengembalian Buku");
         JMenuItem itemLaporanBuku = new JMenuItem("Laporan Buku");
         JMenuItem itemLaporanAuditBuku = new JMenuItem("Laporan Audit Buku");
         JMenuItem itemLaporanDenda = new JMenuItem("Laporan Denda");
         
-        // Listeners Laporan (Placeholder)
+        // Report Listeners (Placeholder)
         itemLaporanBulan.addActionListener(e -> JOptionPane.showMessageDialog(this, "Fitur Laporan belum tersedia."));
         
         MenuLaporan.add(itemLaporanBulan);
@@ -418,12 +418,12 @@ public class Dashboard extends JFrame {
         MenuLaporan.add(itemLaporanAuditBuku);
         MenuLaporan.add(itemLaporanDenda);
         
-        // ======================= 4. MENU CETAK =======================
+        // ======================= 4. PRINT MENU =======================
         JMenuItem itemCetak = new JMenuItem("Cetak Kartu");
         itemCetak.addActionListener(e -> JOptionPane.showMessageDialog(this, "Fitur Cetak belum tersedia."));
         MenuCetak.add(itemCetak);
         
-        // ======================= 5. MENU AUDIT PERPUSTAKAAN =======================
+        // ======================= 5. LIBRARY AUDIT MENU =======================
         JMenuItem itemAuditBuku = new JMenuItem("Audit Pengembalian Buku");
         JMenuItem itemAuditUser = new JMenuItem("Audit User");
         JMenuItem itemAuditProperti = new JMenuItem("Audit Properti");
@@ -434,11 +434,11 @@ public class Dashboard extends JFrame {
         MenuAudit.add(itemAuditUser);
         MenuAudit.add(itemAuditProperti);
         
-        // ======================= 6. MENU ADMINISTRASI =======================
+        // ======================= 6. ADMINISTRATION MENU =======================
         JMenuItem itemAdministrasiAnggota = new JMenuItem("Administrasi Anggota");
         JMenuItem itemAdministrasiUser = new JMenuItem("Administrasi User");
         
-        // Listeners Administrasi
+        // Administration Listeners
         itemAdministrasiAnggota.addActionListener(e -> {
             Anggota f = new Anggota();
             f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -454,14 +454,14 @@ public class Dashboard extends JFrame {
         MenuAdministrasi.add(itemAdministrasiAnggota);
         MenuAdministrasi.add(itemAdministrasiUser);
         
-        // ======================= 7. MENU PENGATURAN =======================
+        // ======================= 7. SETTINGS MENU =======================
         JMenuItem itemPengaturanTema = new JMenuItem("Tema Windows");
         JMenuItem itemPengaturanBackup = new JMenuItem("Backup Data");
         JMenuItem itemLogout = new JMenuItem("Logout");
         
         itemPengaturanTema.addActionListener(e -> JOptionPane.showMessageDialog(this, "Fitur Tema belum tersedia."));
         
-        // Listeners Pengaturan
+        // Settings Listeners
         itemLogout.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this, "Apakah Anda yakin ingin logout?", "Logout", JOptionPane.YES_NO_OPTION);
             if (confirm == JOptionPane.YES_OPTION) {
@@ -475,7 +475,7 @@ public class Dashboard extends JFrame {
         MenuPengaturan.addSeparator();
         MenuPengaturan.add(itemLogout);
 
-        // --- MEMASUKKAN SEMUA MENU KE BAR ---
+        // --- ADD ALL MENUS TO BAR ---
         menuBar.add(MenuDataMaster);
         menuBar.add(MenuAktifitas);
         menuBar.add(MenuLaporan);
