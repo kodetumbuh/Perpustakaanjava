@@ -173,7 +173,8 @@ public class Dashboard extends JFrame {
         );
 
         // Customize Chart for better aesthetics
-        chart.setBackgroundPaint(new Color(240, 240, 240));
+        // Use the panel's background color instead of hardcoded gray
+        chart.setBackgroundPaint(pnlChart.getBackground()); 
         chart.getTitle().setFont(new Font("SansSerif", Font.PLAIN, 15));
 
         // Configure Axis to show only integers
@@ -185,6 +186,13 @@ public class Dashboard extends JFrame {
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setMouseWheelEnabled(true);
         chartPanel.setPreferredSize(new Dimension(1200, 400)); // Wide width, short height
+        
+        // Prevent stretching by allowing the chart to draw at any size
+        chartPanel.setMaximumDrawWidth(Integer.MAX_VALUE);
+        chartPanel.setMaximumDrawHeight(Integer.MAX_VALUE);
+        chartPanel.setMinimumDrawWidth(0);
+        chartPanel.setMinimumDrawHeight(0);
+
 
         // Update Panel
         pnlChart.removeAll();
@@ -412,6 +420,7 @@ public class Dashboard extends JFrame {
         // Report Listeners
         itemLaporanBulan.addActionListener(e -> {
             LaporanBuku f = new LaporanBuku();
+            f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             f.setVisible(true);
         });
         
@@ -461,11 +470,7 @@ public class Dashboard extends JFrame {
         JMenuItem itemPengaturanTema = new JMenuItem("Tema Windows");
         JMenuItem itemPengaturanBackup = new JMenuItem("Backup Data");
         JMenuItem itemLogout = new JMenuItem("Logout");
-        // Report Listeners
-        itemLaporanBulan.addActionListener(e -> {
-            LaporanBuku f = new LaporanBuku();
-            f.setVisible(true);
-        });
+
         
         itemPengaturanTema.addActionListener(e -> JOptionPane.showMessageDialog(this, "Fitur Tema belum tersedia."));
         

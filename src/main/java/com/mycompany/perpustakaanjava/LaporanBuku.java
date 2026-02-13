@@ -17,6 +17,8 @@ import net.sf.dynamicreports.report.builder.style.StyleBuilder;
 import net.sf.dynamicreports.report.constant.HorizontalTextAlignment;
 import net.sf.dynamicreports.report.exception.DRException;
 import net.sf.dynamicreports.jasper.builder.JasperReportBuilder;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.view.JasperViewer;
 
 public class LaporanBuku extends JFrame {
     
@@ -141,7 +143,7 @@ public class LaporanBuku extends JFrame {
                 .setDataSource(chartQuery, conn);
 
             // 4. Main Report
-            report()
+            JasperPrint jasperPrint = report()
                 .setColumnTitleStyle(columnTitleStyle)
                 .setColumnStyle(detailStyle) // Apply border to all data cells
                 .highlightDetailEvenRows()
@@ -165,7 +167,12 @@ public class LaporanBuku extends JFrame {
                 )
                 .pageFooter(Components.pageXofY())
                 .setDataSource(mainQuery, conn)
-                .show();
+                .toJasperPrint();
+            
+            JasperViewer viewer = new JasperViewer(jasperPrint, false); // false = don't exit app on close
+            viewer.setTitle("Laporan Peminjaman Buku");
+            viewer.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            viewer.setVisible(true);
 
         } catch (Exception ex) {
             ex.printStackTrace();
