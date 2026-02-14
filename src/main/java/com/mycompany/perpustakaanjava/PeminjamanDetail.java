@@ -81,6 +81,77 @@ public class PeminjamanDetail extends JFrame {
         @Override public String toString() { return judul; }
     }
 
+    // --- Autocomplete ComboBox Inner Class (Copied from Buku.java) ---
+    public static class AutocompleteComboBox<T> extends JComboBox<T> {
+        private final java.util.function.Function<String, List<T>> searchFunc;
+        private boolean isFiredByKeyboard = false;
+
+        public AutocompleteComboBox(java.util.function.Function<String, List<T>> searchFunc) {
+            this.searchFunc = searchFunc;
+            setEditable(true);
+            
+            JTextField editor = (JTextField) getEditor().getEditorComponent();
+            editor.addKeyListener(new KeyAdapter() {
+                @Override
+                public void keyReleased(KeyEvent e) {
+                   if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_ENTER) {
+                       return;
+                   }
+                   char c = e.getKeyChar();
+                   if (!Character.isLetterOrDigit(c) && c != KeyEvent.VK_BACK_SPACE && c != KeyEvent.VK_DELETE && c != ' ') {
+                       // ignore
+                   }
+
+                   SwingUtilities.invokeLater(() -> {
+                       isFiredByKeyboard = true;
+                       String text = editor.getText();
+                       if (text.length() > 0) {
+                           performSearch(text);
+                       } else {
+                           hidePopup();
+                       }
+                       isFiredByKeyboard = false;
+                   });
+                }
+                
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+                         if (!isPopupVisible()) {
+                             showPopup();
+                         }
+                    }
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        if (isPopupVisible()) {
+                             Object selected = getSelectedItem();
+                             if (selected != null) {
+                                 editor.setText(selected.toString());
+                                 hidePopup();
+                             }
+                        }
+                    }
+                }
+            });
+        }
+        
+        private void performSearch(String text) {
+            List<T> results = searchFunc.apply(text);
+            DefaultComboBoxModel<T> model = (DefaultComboBoxModel<T>) getModel();
+            model.removeAllElements();
+            for (T item : results) {
+                model.addElement(item);
+            }
+            JTextField editor = (JTextField) getEditor().getEditorComponent();
+            editor.setText(text);
+            editor.setCaretPosition(text.length()); // Maintain cursor position
+            if (model.getSize() > 0) {
+                showPopup();
+            } else {
+                hidePopup();
+            }
+        }
+    }
+
     // --- UI Logic ---
     private JTextField txtSearch;
     private JTable table;
@@ -296,68 +367,27 @@ public class PeminjamanDetail extends JFrame {
     private void showDetailDialog(PeminjamanDetailData detail) {
         JDialog dialog = new JDialog(this, detail == null ? "Add Detail" : "Edit Detail", true);
         dialog.setLayout(new MigLayout("fill, insets 20", "[right][grow]", "[]"));
-        dialog.setSize(400, 350);
+        dialog.setSize(600, 400);
         dialog.setLocationRelativeTo(this);
 
         JTextField txtNoPeminjaman = new JTextField(20);
         txtNoPeminjaman.setEditable(false);
         
         // Auto-Search Buku
-        JTextField txtBuku = new JTextField(20);
-        JPopupMenu popupBuku = new JPopupMenu();
-        final int[] selectedBukuId = new int[]{-1};
+        AutocompleteComboBox<BukuItem> cmbBuku = new AutocompleteComboBox<>(this::searchBuku);
+        
         final int[] selectedPeminjamanId = new int[]{-1}; // Need to resolve ID from No Peminjaman
-
-        txtBuku.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyReleased(KeyEvent e) {
-                String text = txtBuku.getText().trim();
-                if (text.length() < 1) {
-                    popupBuku.setVisible(false);
-                    return;
-                }
-                
-                // Search logic
-                List<BukuItem> results = searchBuku(text);
-                if (results.isEmpty()) {
-                    popupBuku.setVisible(false);
-                    return;
-                }
-                
-                popupBuku.removeAll();
-                for (BukuItem item : results) {
-                    JMenuItem menuItem = new JMenuItem(item.toString());
-                    menuItem.addActionListener(ev -> {
-                        txtBuku.setText(item.toString());
-                        selectedBukuId[0] = item.getId();
-                        popupBuku.setVisible(false);
-                    });
-                    popupBuku.add(menuItem);
-                }
-                
-                // Show popup below text field
-                if (!results.isEmpty()) {
-                    popupBuku.show(txtBuku, 0, txtBuku.getHeight());
-                    txtBuku.requestFocus();
-                }
-            }
-        });
-
-        // Use standard KeyListener for navigation/hiding if needed, but focus is key
         
         JTextField txtQty = new JTextField(20);
         JTextField txtCatatan = new JTextField(20);
-
-        // Remove old loaders needed only if we fallback, but user wants text fields
-        // loadPeminjamanCombo(cmbPeminjaman); 
-        // loadBukuCombo(cmbBuku);
 
         if (detail != null) {
             txtNoPeminjaman.setText(detail.getNoPeminjaman());
             selectedPeminjamanId[0] = detail.getIdPeminjaman();
             
-            txtBuku.setText(detail.getJudulBuku());
-            selectedBukuId[0] = detail.getIdBuku();
+            BukuItem bItem = new BukuItem(detail.getIdBuku(), detail.getJudulBuku());
+            cmbBuku.addItem(bItem);
+            cmbBuku.setSelectedItem(bItem);
             
             txtQty.setText(String.valueOf(detail.getQty()));
             txtCatatan.setText(detail.getCatatan());
@@ -377,7 +407,7 @@ public class PeminjamanDetail extends JFrame {
         dialog.add(new JLabel("No Peminjaman:"));
         dialog.add(txtNoPeminjaman, "wrap, growx");
         dialog.add(new JLabel("Buku (Type to Search):"));
-        dialog.add(txtBuku, "wrap, growx");
+        dialog.add(cmbBuku, "wrap, growx");
         dialog.add(new JLabel("Qty:"));
         dialog.add(txtQty, "wrap, growx");
         dialog.add(new JLabel("Catatan:"));
@@ -386,7 +416,13 @@ public class PeminjamanDetail extends JFrame {
         JButton btnSave = new JButton("Save");
         btnSave.addActionListener(e -> {
             int pId = selectedPeminjamanId[0];
-            int bId = selectedBukuId[0];
+            
+            int bId = -1;
+            Object bObj = cmbBuku.getSelectedItem();
+            if (bObj instanceof BukuItem) {
+                bId = ((BukuItem)bObj).getId();
+            }
+
             String strQty = txtQty.getText();
             String catatan = txtCatatan.getText();
 

@@ -1,4 +1,3 @@
-com\mycompany\perpustakaanjava\PeminjamanDetail$4.class
 com\mycompany\perpustakaanjava\User.class
 com\mycompany\perpustakaanjava\Peminjaman$3.class
 com\mycompany\perpustakaanjava\Pengembalian$PeminjamanItem.class
@@ -8,6 +7,7 @@ com\mycompany\perpustakaanjava\SelectTheme$1.class
 com\mycompany\perpustakaanjava\Pengembalian$1.class
 com\mycompany\perpustakaanjava\Anggota$1.class
 com\mycompany\perpustakaanjava\Rak.class
+com\mycompany\perpustakaanjava\PeminjamanDetail$AutocompleteComboBox$1.class
 com\mycompany\perpustakaanjava\Rak$3.class
 com\mycompany\perpustakaanjava\Pengembalian$4.class
 com\mycompany\perpustakaanjava\Pengembalian$UserItem.class
@@ -35,6 +35,7 @@ com\mycompany\perpustakaanjava\Dashboard$2.class
 com\mycompany\perpustakaanjava\LaporanBuku.class
 com\mycompany\perpustakaanjava\LoginForm.class
 com\mycompany\perpustakaanjava\User$3.class
+com\mycompany\perpustakaanjava\PeminjamanDetail$AutocompleteComboBox.class
 com\mycompany\perpustakaanjava\Peminjaman$1.class
 com\mycompany\perpustakaanjava\Buku$AutocompleteComboBox$1.class
 com\mycompany\perpustakaanjava\Peminjaman$PeminjamanData.class
