@@ -1,3 +1,4 @@
+com\mycompany\perpustakaanjava\LaporanPengembalianBuku$Templates.class
 com\mycompany\perpustakaanjava\User.class
 com\mycompany\perpustakaanjava\Peminjaman$3.class
 com\mycompany\perpustakaanjava\Pengembalian$PeminjamanItem.class
@@ -14,6 +15,7 @@ com\mycompany\perpustakaanjava\Pengembalian$UserItem.class
 com\mycompany\perpustakaanjava\User$1.class
 com\mycompany\perpustakaanjava\Pengembalian$3.class
 com\mycompany\perpustakaanjava\Anggota$2.class
+com\mycompany\perpustakaanjava\LaporanPeminjamanBuku$Templates.class
 com\mycompany\perpustakaanjava\PerpustakaanJava.class
 com\mycompany\perpustakaanjava\LaporanBuku$Templates.class
 com\mycompany\perpustakaanjava\Anggota.class

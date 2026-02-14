@@ -310,7 +310,6 @@ public class Dashboard extends JFrame {
         JMenu MenuDataMaster = new JMenu("Master Data");
         JMenu MenuAktifitas = new JMenu("Aktifitas");
         JMenu MenuLaporan = new JMenu("Laporan");
-        JMenu MenuCetak = new JMenu("Cetak");
         JMenu MenuAudit = new JMenu("Audit Perpustakaan");
         JMenu MenuAdministrasi = new JMenu("Administrasi"); 
         JMenu MenuPengaturan = new JMenu("Pengaturan");       
@@ -416,10 +415,24 @@ public class Dashboard extends JFrame {
         JMenuItem itemLaporanBuku = new JMenuItem("Laporan Buku");
         JMenuItem itemLaporanAuditBuku = new JMenuItem("Laporan Audit Buku");
         JMenuItem itemLaporanDenda = new JMenuItem("Laporan Denda");
+        JMenuItem itemLaporanAuditProperti = new JMenuItem("Laporan Audit Properti");
         
         // Report Listeners
         itemLaporanBulan.addActionListener(e -> {
+            LaporanPeminjamanBuku f = new LaporanPeminjamanBuku();
+            f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            f.setVisible(true);
+        });
+        
+        itemLaporanBuku.addActionListener(e -> {
             LaporanBuku f = new LaporanBuku();
+            f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            f.setVisible(true);
+        });
+        
+        
+        itemLaporanPengembalian.addActionListener(e -> {
+            LaporanPengembalianBuku f = new LaporanPengembalianBuku();
             f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             f.setVisible(true);
         });
@@ -429,20 +442,12 @@ public class Dashboard extends JFrame {
         MenuLaporan.add(itemLaporanBuku);
         MenuLaporan.add(itemLaporanAuditBuku);
         MenuLaporan.add(itemLaporanDenda);
+        MenuLaporan.add(itemLaporanAuditProperti);
         
-        // ======================= 4. PRINT MENU =======================
-        JMenuItem itemCetak = new JMenuItem("Cetak Kartu");
-        itemCetak.addActionListener(e -> JOptionPane.showMessageDialog(this, "Fitur Cetak belum tersedia."));
-        MenuCetak.add(itemCetak);
-        
-        // ======================= 5. LIBRARY AUDIT MENU =======================
-        JMenuItem itemAuditBuku = new JMenuItem("Audit Pengembalian Buku");
+        // ======================= 4. LIBRARY AUDIT MENU =======================
         JMenuItem itemAuditUser = new JMenuItem("Audit User");
         JMenuItem itemAuditProperti = new JMenuItem("Audit Properti");
         
-        itemAuditBuku.addActionListener(e -> JOptionPane.showMessageDialog(this, "Fitur Audit belum tersedia."));
-        
-        MenuAudit.add(itemAuditBuku);
         MenuAudit.add(itemAuditUser);
         MenuAudit.add(itemAuditProperti);
         
@@ -492,7 +497,6 @@ public class Dashboard extends JFrame {
         menuBar.add(MenuDataMaster);
         menuBar.add(MenuAktifitas);
         menuBar.add(MenuLaporan);
-        menuBar.add(MenuCetak);
         menuBar.add(MenuAudit);
         menuBar.add(MenuAdministrasi);
         menuBar.add(MenuPengaturan);

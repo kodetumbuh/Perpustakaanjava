@@ -31,7 +31,7 @@ public class LaporanBuku extends JFrame {
     }
 
     private void initUI() {
-        setTitle("Laporan Peminjaman Buku");
+        setTitle("Laporan Data Buku");
         setSize(400, 200);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -80,8 +80,8 @@ public class LaporanBuku extends JFrame {
         try {
             Connection conn = DatabaseConnection.getConnection();
             
-            // 1. Build Report Query (Table Data)
-            String sqlCheck = "SELECT count(*) FROM peminjaman WHERE tgl_peminjaman BETWEEN ? AND ?";
+            // 1. Check if there's data in the date range
+            String sqlCheck = "SELECT count(*) FROM buku WHERE tgl_masuk BETWEEN ? AND ?";
             try (PreparedStatement pst = conn.prepareStatement(sqlCheck)) {
                 pst.setString(1, strStart);
                 pst.setString(2, strEnd);
@@ -98,79 +98,93 @@ public class LaporanBuku extends JFrame {
             StyleBuilder columnTitleStyle = stl.style(boldCenteredStyle)
                     .setBorder(stl.pen1Point())
                     .setBackgroundColor(Color.LIGHT_GRAY)
-                    .setPadding(5); // Add padding to header
+                    .setPadding(5);
             StyleBuilder detailStyle = stl.style()
                     .setBorder(stl.pen1Point())
-                    .setPadding(5); // Add padding to data cells (small gap)
+                    .setPadding(5);
 
-            // 2. Report Configuration
-            // Main Query for the Table (Detail)
+            // 2. Main Query for the Table (Detail)
             String mainQuery = "SELECT " +
-                    "a.nama as nama_peminjam, " +
-                    "b.judul as nama_buku, " + 
-                    "p.tgl_peminjaman, " +
-                    "p.tgl_kembali_rencana, " +
-                    "p.tgl_kembali_aktual, " +
-                    "p.status as status_buku " +
-                    "FROM peminjaman_detail pd " +
-                    "JOIN peminjaman p ON pd.id_peminjaman = p.id_peminjaman " +
-                    "JOIN anggota a ON p.id_anggota = a.id_anggota " +
-                    "JOIN buku b ON pd.id_buku = b.id_buku " +
-                    "WHERE p.tgl_peminjaman BETWEEN '" + strStart + "' AND '" + strEnd + "' " +
-                    "ORDER BY p.tgl_peminjaman DESC";
+                    "b.isbn, " +
+                    "b.no_barcode, " +
+                    "b.judul, " +
+                    "p.nama_pengarang, " +
+                    "pn.nama_penerbit, " +
+                    "k.nama_kategori, " +
+                    "b.tahun_terbit, " +
+                    "b.edisi, " +
+                    "b.halaman, " +
+                    "b.bahasa, " +
+                    "b.tgl_masuk, " +
+                    "b.status " +
+                    "FROM buku b " +
+                    "LEFT JOIN pengarang p ON b.id_pengarang = p.id_pengarang " +
+                    "LEFT JOIN penerbit pn ON b.id_penerbit = pn.id_penerbit " +
+                    "LEFT JOIN kategori k ON b.id_kategori = k.id_kategori " +
+                    "WHERE b.tgl_masuk BETWEEN '" + strStart + "' AND '" + strEnd + "' " +
+                    "ORDER BY b.tgl_masuk DESC";
 
-            // Chart Query (Grouped Data)
-            String chartQuery = "SELECT p.status, COUNT(*) as jumlah " +
-                                "FROM peminjaman p " +
-                                "WHERE p.tgl_peminjaman BETWEEN '" + strStart + "' AND '" + strEnd + "' " +
-                                "GROUP BY p.status";
+            // Chart Query (Grouped Data by Status)
+            String chartQuery = "SELECT b.status, COUNT(*) as jumlah " +
+                                "FROM buku b " +
+                                "WHERE b.tgl_masuk BETWEEN '" + strStart + "' AND '" + strEnd + "' " +
+                                "GROUP BY b.status";
 
-            // 3. Subreport for Chart
+            // 3. Build Chart Subreport
             JasperReportBuilder chartReport = report();
             chartReport
-                .setTemplate(Templates.reportTemplate) // Assuming minimal template or ignoring if not present
+                .setTemplate(Templates.reportTemplate)
+                .setPageFormat(net.sf.dynamicreports.report.constant.PageType.A4, net.sf.dynamicreports.report.constant.PageOrientation.LANDSCAPE)
                 .title(
-                    Components.text("Statistik Status Buku").setStyle(boldCenteredStyle),
-                    Components.verticalGap(10) // Small gap below chart title
+                    Components.text("Distribusi Status Buku").setStyle(boldCenteredStyle),
+                    Components.verticalGap(10)
                 )
                 .summary(
                     cht.pieChart()
-                        .setTitle("Status Buku (Dipinjam vs Dikembalikan)")
+                        .setTitle("Status Buku (Tersedia, Rusak, Hilang, Habis)")
                         .setKey(col.column("Status", "status", type.stringType()))
                         .series(cht.serie(col.column("Jumlah", "jumlah", type.integerType())))
-                        .setFixedHeight(300)
+                        .setFixedHeight(400)
                 )
                 .setDataSource(chartQuery, conn);
 
-            // 4. Main Report
+            // 4. Main Report with Table and Chart
             JasperPrint jasperPrint = report()
+                .setPageFormat(net.sf.dynamicreports.report.constant.PageType.A4, net.sf.dynamicreports.report.constant.PageOrientation.LANDSCAPE)
                 .setColumnTitleStyle(columnTitleStyle)
-                .setColumnStyle(detailStyle) // Apply border to all data cells
+                .setColumnStyle(detailStyle)
                 .highlightDetailEvenRows()
                 .columns(
-                    col.column("Nama Peminjam", "nama_peminjam", type.stringType()),
-                    col.column("Nama Buku", "nama_buku", type.stringType()),
-                    col.column("Tgl Pinjam", "tgl_peminjaman", type.dateType()),
-                    col.column("Tgl Kembali (Rencana)", "tgl_kembali_rencana", type.dateType()),
-                    col.column("Tgl Kembali (Aktual)", "tgl_kembali_aktual", type.dateType()),
-                    col.column("Status", "status_buku", type.stringType())
+                    col.column("ISBN", "isbn", type.stringType()).setWidth(80),
+                    col.column("Barcode", "no_barcode", type.stringType()).setWidth(80),
+                    col.column("Judul", "judul", type.stringType()).setWidth(150),
+                    col.column("Pengarang", "nama_pengarang", type.stringType()).setWidth(100),
+                    col.column("Penerbit", "nama_penerbit", type.stringType()).setWidth(100),
+                    col.column("Kategori", "nama_kategori", type.stringType()).setWidth(80),
+                    col.column("Tahun", "tahun_terbit", type.integerType()).setWidth(50).setPattern("0"),
+                    col.column("Edisi", "edisi", type.stringType()).setWidth(60),
+                    col.column("Hal", "halaman", type.integerType()).setWidth(40),
+                    col.column("Bahasa", "bahasa", type.stringType()).setWidth(60),
+                    col.column("Tgl Masuk", "tgl_masuk", type.dateType()).setWidth(70),
+                    col.column("Status", "status", type.stringType()).setWidth(60)
                 )
                 .title(
-                    Components.text("Laporan Peminjaman Buku (" + strStart + " - " + strEnd + ")")
+                    Components.text("Laporan Data Buku (" + strStart + " - " + strEnd + ")")
                         .setHorizontalTextAlignment(HorizontalTextAlignment.CENTER)
                         .setStyle(boldStyle),
-                    Components.verticalGap(20) // Gap between main title and table
+                    Components.verticalGap(20)
                 )
                 .summary(
-                    Components.verticalGap(30), // Gap between table and subreport
+                    Components.pageBreak(),
                     cmp.subreport(chartReport)
                 )
                 .pageFooter(Components.pageXofY())
                 .setDataSource(mainQuery, conn)
                 .toJasperPrint();
             
-            JasperViewer viewer = new JasperViewer(jasperPrint, false); // false = don't exit app on close
-            viewer.setTitle("Laporan Peminjaman Buku");
+            // Display combined report
+            JasperViewer viewer = new JasperViewer(jasperPrint, false);
+            viewer.setTitle("Laporan Data Buku");
             viewer.setExtendedState(JFrame.MAXIMIZED_BOTH);
             viewer.setVisible(true);
 
