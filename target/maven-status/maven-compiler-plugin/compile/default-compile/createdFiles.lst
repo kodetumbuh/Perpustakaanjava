@@ -48,6 +48,7 @@ com\mycompany\perpustakaanjava\Peminjaman.class
 com\mycompany\perpustakaanjava\Buku$3.class
 com\mycompany\perpustakaanjava\Anggota$4.class
 com\mycompany\perpustakaanjava\Pengembalian$PengembalianData.class
+com\mycompany\perpustakaanjava\LaporanDenda.class
 com\mycompany\perpustakaanjava\LaporanDendaAnggota.class
 com\mycompany\perpustakaanjava\Peminjaman$UserItem.class
 com\mycompany\perpustakaanjava\Rak$2.class

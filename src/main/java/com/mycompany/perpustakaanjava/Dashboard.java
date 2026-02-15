@@ -413,7 +413,6 @@ public class Dashboard extends JFrame {
         JMenuItem itemLaporanBulan = new JMenuItem("Laporan Peminjaman Buku");
         JMenuItem itemLaporanPengembalian = new JMenuItem("Laporan Pengembalian Buku");
         JMenuItem itemLaporanBuku = new JMenuItem("Laporan Buku");
-        JMenuItem itemLaporanAuditBuku = new JMenuItem("Laporan Audit Buku");
         JMenuItem itemLaporanDenda = new JMenuItem("Laporan Denda");
         JMenuItem itemLaporanAuditProperti = new JMenuItem("Laporan Audit Properti");
         
@@ -436,11 +435,16 @@ public class Dashboard extends JFrame {
             f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             f.setVisible(true);
         });
+
+        itemLaporanDenda.addActionListener(e -> {
+            LaporanDenda f = new LaporanDenda();
+            f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            f.setVisible(true);
+        });
         
         MenuLaporan.add(itemLaporanBulan);
         MenuLaporan.add(itemLaporanPengembalian);
         MenuLaporan.add(itemLaporanBuku);
-        MenuLaporan.add(itemLaporanAuditBuku);
         MenuLaporan.add(itemLaporanDenda);
         MenuLaporan.add(itemLaporanAuditProperti);
         

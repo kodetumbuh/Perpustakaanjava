@@ -20,18 +20,18 @@ import net.sf.dynamicreports.jasper.builder.JasperReportBuilder;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.view.JasperViewer;
 
-public class LaporanBuku extends JFrame {
+public class LaporanDenda extends JFrame {
     
     private JDateChooser dateStart;
     private JDateChooser dateEnd;
     private JButton btnGenerate;
 
-    public LaporanBuku() {
+    public LaporanDenda() {
         initUI();
     }
 
     private void initUI() {
-        setTitle("Laporan Data Buku");
+        setTitle("Laporan Denda");
         setSize(400, 200);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -81,7 +81,7 @@ public class LaporanBuku extends JFrame {
             Connection conn = DatabaseConnection.getConnection();
             
             // 1. Check if there's data in the date range
-            String sqlCheck = "SELECT count(*) FROM buku WHERE tgl_masuk BETWEEN ? AND ?";
+            String sqlCheck = "SELECT count(*) FROM peminjaman WHERE tgl_peminjaman BETWEEN ? AND ?";
             try (PreparedStatement pst = conn.prepareStatement(sqlCheck)) {
                 pst.setString(1, strStart);
                 pst.setString(2, strEnd);
@@ -105,86 +105,46 @@ public class LaporanBuku extends JFrame {
 
             // 2. Main Query for the Table (Detail)
             String mainQuery = "SELECT " +
-                    "b.judul, " +
-                    "p.nama_pengarang, " +
-                    "pn.nama_penerbit, " +
-                    "k.nama_kategori, " +
-                    "b.tahun_terbit, " +
-                    "b.halaman, " +
-                    "b.bahasa, " +
-                    "b.stok_total, " +
-                    "b.stok_tersedia, " +
-                    "b.harga, " +
-                    "b.tgl_masuk, " +
-                    "b.status " +
-                    "FROM buku b " +
-                    "LEFT JOIN pengarang p ON b.id_pengarang = p.id_pengarang " +
-                    "LEFT JOIN penerbit pn ON b.id_penerbit = pn.id_penerbit " +
-                    "LEFT JOIN kategori k ON b.id_kategori = k.id_kategori " +
-                    "WHERE b.tgl_masuk BETWEEN '" + strStart + "' AND '" + strEnd + "' " +
-                    "ORDER BY b.tgl_masuk DESC";
+                    "a.nama as nama_peminjam, " +
+                    "b.judul as nama_buku, " + 
+                    "p.denda, " +
+                    "p.tgl_peminjaman, " +
+                    "p.tgl_kembali_rencana, " +
+                    "p.tgl_kembali_aktual " +
+                    "FROM peminjaman_detail pd " +
+                    "JOIN peminjaman p ON pd.id_peminjaman = p.id_peminjaman " +
+                    "JOIN anggota a ON p.id_anggota = a.id_anggota " +
+                    "JOIN buku b ON pd.id_buku = b.id_buku " +
+                    "WHERE p.tgl_peminjaman BETWEEN '" + strStart + "' AND '" + strEnd + "' " +
+                    "ORDER BY p.tgl_peminjaman DESC";
 
-            // Chart Query (Grouped Data by Status)
-            String chartQuery = "SELECT b.status, COUNT(*) as jumlah " +
-                                "FROM buku b " +
-                                "WHERE b.tgl_masuk BETWEEN '" + strStart + "' AND '" + strEnd + "' " +
-                                "GROUP BY b.status";
-
-            // 3. Build Chart Subreport
-            JasperReportBuilder chartReport = report();
-            chartReport
-                .setTemplate(Templates.reportTemplate)
-                .setPageFormat(net.sf.dynamicreports.report.constant.PageType.A4, net.sf.dynamicreports.report.constant.PageOrientation.LANDSCAPE)
-                .title(
-                    Components.text("Distribusi Status Buku").setStyle(boldCenteredStyle),
-                    Components.verticalGap(10)
-                )
-                .summary(
-                    cht.pieChart()
-                        .setTitle("Status Buku (Tersedia, Rusak, Hilang, Habis)")
-                        .setKey(col.column("Status", "status", type.stringType()))
-                        .series(cht.serie(col.column("Jumlah", "jumlah", type.integerType())))
-                        .setFixedHeight(400)
-                )
-                .setDataSource(chartQuery, conn);
-
-            // 4. Main Report with Table and Chart
+            // 3. Main Report (Table Only)
             JasperPrint jasperPrint = report()
-                .setPageFormat(net.sf.dynamicreports.report.constant.PageType.A4, net.sf.dynamicreports.report.constant.PageOrientation.LANDSCAPE)
+                .setPageFormat(net.sf.dynamicreports.report.constant.PageType.A4, net.sf.dynamicreports.report.constant.PageOrientation.PORTRAIT)
                 .setColumnTitleStyle(columnTitleStyle)
                 .setColumnStyle(detailStyle)
                 .highlightDetailEvenRows()
                 .columns(
-                    col.column("Judul", "judul", type.stringType()).setWidth(150),
-                    col.column("Pengarang", "nama_pengarang", type.stringType()).setWidth(100),
-                    col.column("Penerbit", "nama_penerbit", type.stringType()).setWidth(100),
-                    col.column("Kategori", "nama_kategori", type.stringType()).setWidth(80),
-                    col.column("Tahun", "tahun_terbit", type.integerType()).setWidth(50).setPattern("0"),
-                    col.column("Hal", "halaman", type.integerType()).setWidth(40),
-                    col.column("Bahasa", "bahasa", type.stringType()).setWidth(60),
-                    col.column("Stok Total", "stok_total", type.integerType()).setWidth(60),
-                    col.column("Stok Tersedia", "stok_tersedia", type.integerType()).setWidth(60),
-                    col.column("Harga", "harga", type.bigDecimalType()).setWidth(80),
-                    col.column("Tgl Masuk", "tgl_masuk", type.dateType()).setWidth(70),
-                    col.column("Status", "status", type.stringType()).setWidth(60)
+                    col.column("Nama Peminjam", "nama_peminjam", type.stringType()).setWidth(120),
+                    col.column("Judul Buku", "nama_buku", type.stringType()).setWidth(150),
+                    col.column("Total Denda", "denda", type.bigDecimalType()).setWidth(80),
+                    col.column("Tgl Peminjaman", "tgl_peminjaman", type.dateType()).setWidth(90),
+                    col.column("Tgl Pengembalian", "tgl_kembali_rencana", type.dateType()).setWidth(90),
+                    col.column("Tgl Pengembalian Aktual", "tgl_kembali_aktual", type.dateType()).setWidth(90)
                 )
                 .title(
-                    Components.text("Laporan Data Buku (" + strStart + " - " + strEnd + ")")
+                    Components.text("Laporan Denda (" + strStart + " - " + strEnd + ")")
                         .setHorizontalTextAlignment(HorizontalTextAlignment.CENTER)
                         .setStyle(boldStyle),
                     Components.verticalGap(20)
-                )
-                .summary(
-                    Components.pageBreak(),
-                    cmp.subreport(chartReport)
                 )
                 .pageFooter(Components.pageXofY())
                 .setDataSource(mainQuery, conn)
                 .toJasperPrint();
             
-            // Display combined report
+            // Display report
             JasperViewer viewer = new JasperViewer(jasperPrint, false);
-            viewer.setTitle("Laporan Data Buku");
+            viewer.setTitle("Laporan Denda");
             viewer.setExtendedState(JFrame.MAXIMIZED_BOTH);
             viewer.setVisible(true);
 
@@ -192,10 +152,5 @@ public class LaporanBuku extends JFrame {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Gagal membuat laporan: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-    }
-    
-    // Simple Templates replacement since we don't have the user's Templates class
-    private static class Templates {
-        public static final net.sf.dynamicreports.report.builder.ReportTemplateBuilder reportTemplate = template().setLocale(java.util.Locale.ENGLISH);
     }
 }
