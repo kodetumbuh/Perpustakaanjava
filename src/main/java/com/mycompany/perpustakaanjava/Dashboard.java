@@ -490,7 +490,8 @@ public class Dashboard extends JFrame {
         // ======================= 7. SETTINGS MENU =======================
         JMenuItem itemPengaturanTema = new JMenuItem("Tema Windows");
         JMenuItem itemPengaturanBackup = new JMenuItem("Backup Data");
-        JMenuItem itemPengaturanImport = new JMenuItem("Import Data");
+        JMenuItem itemPengaturanImport = new JMenuItem("Import Data - Restore");
+        JMenuItem itemResetData = new JMenuItem("Reset Data"); // Reset Data
         JMenuItem itemLogout = new JMenuItem("Logout");
 
         
@@ -506,6 +507,11 @@ public class Dashboard extends JFrame {
             f.setVisible(true);
         });
         
+        itemResetData.addActionListener(e -> {
+            ResetData f = new ResetData(this);
+            f.setVisible(true);
+        });
+        
         // Settings Listeners
         itemLogout.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this, "Apakah Anda yakin ingin logout?", "Logout", JOptionPane.YES_NO_OPTION);
@@ -518,6 +524,7 @@ public class Dashboard extends JFrame {
         MenuPengaturan.add(itemPengaturanTema);
         MenuPengaturan.add(itemPengaturanBackup);
         MenuPengaturan.add(itemPengaturanImport);
+        MenuPengaturan.add(itemResetData); // Add to menu
         MenuPengaturan.addSeparator();
         MenuPengaturan.add(itemLogout);
 

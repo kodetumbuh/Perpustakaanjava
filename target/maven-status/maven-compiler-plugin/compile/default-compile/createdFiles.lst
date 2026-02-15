@@ -24,6 +24,7 @@ com\mycompany\perpustakaanjava\PeminjamanDetail$AutocompleteComboBox.class
 com\mycompany\perpustakaanjava\Peminjaman$1.class
 com\mycompany\perpustakaanjava\Buku$AutocompleteComboBox$1.class
 com\mycompany\perpustakaanjava\Peminjaman$PeminjamanData.class
+com\mycompany\perpustakaanjava\ResetData$1.class
 com\mycompany\perpustakaanjava\Peminjaman$2.class
 com\mycompany\perpustakaanjava\Peminjaman.class
 com\mycompany\perpustakaanjava\Pengembalian$PengembalianData.class
@@ -48,6 +49,7 @@ com\mycompany\perpustakaanjava\LaporanBuku$Templates.class
 com\mycompany\perpustakaanjava\Anggota.class
 com\mycompany\perpustakaanjava\Peminjaman$4.class
 com\mycompany\perpustakaanjava\Buku$2.class
+com\mycompany\perpustakaanjava\ResetData.class
 com\mycompany\perpustakaanjava\LaporanPengembalianBuku.class
 com\mycompany\perpustakaanjava\Anggota$3.class
 com\mycompany\perpustakaanjava\Rak$RakData.class
