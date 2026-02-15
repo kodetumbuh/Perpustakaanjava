@@ -32,11 +32,13 @@ com\mycompany\perpustakaanjava\Pengembalian$5.class
 com\mycompany\perpustakaanjava\Dashboard$1.class
 com\mycompany\perpustakaanjava\LaporanPengembalianBuku$Templates.class
 com\mycompany\perpustakaanjava\User.class
+com\mycompany\perpustakaanjava\LaporanAudit.class
 com\mycompany\perpustakaanjava\User$2.class
 com\mycompany\perpustakaanjava\LaporanPeminjamanBuku.class
 com\mycompany\perpustakaanjava\AuditProperti$PropertiData.class
 com\mycompany\perpustakaanjava\Pengembalian$1.class
 com\mycompany\perpustakaanjava\Anggota$1.class
+com\mycompany\perpustakaanjava\Backup.class
 com\mycompany\perpustakaanjava\Pengembalian$4.class
 com\mycompany\perpustakaanjava\AuditProperti.class
 com\mycompany\perpustakaanjava\LaporanPeminjamanBuku$Templates.class

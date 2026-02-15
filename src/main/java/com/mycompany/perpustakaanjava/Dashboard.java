@@ -321,7 +321,7 @@ public class Dashboard extends JFrame {
         JMenuItem itemPenerbit = new JMenuItem("Penerbit");
         JMenuItem itemPengarang = new JMenuItem("Pengarang");
         JMenuItem itemRak = new JMenuItem("Rak Lemari");
-        JMenuItem itemAuditProperti = new JMenuItem("Audit Properti");
+
         
         // Master Data Listeners
         itemAnggota.addActionListener(e -> {
@@ -360,11 +360,6 @@ public class Dashboard extends JFrame {
             f.setVisible(true);
         });
         
-        itemAuditProperti.addActionListener(e -> {
-            AuditProperti f = new AuditProperti();
-            f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            f.setVisible(true);
-        });
         
         MenuDataMaster.add(itemAnggota);
         MenuDataMaster.add(itemBuku);        
@@ -372,7 +367,6 @@ public class Dashboard extends JFrame {
         MenuDataMaster.add(itemPenerbit);
         MenuDataMaster.add(itemPengarang);
         MenuDataMaster.add(itemRak);
-        MenuDataMaster.add(itemAuditProperti);
 
         // ======================= 2. ACTIVITY MENU =======================
         JMenuItem itemPeminjaman = new JMenuItem("Peminjaman Buku");
@@ -450,6 +444,12 @@ public class Dashboard extends JFrame {
             f.setVisible(true);
         });
         
+        itemLaporanAuditProperti.addActionListener(e -> {
+            LaporanAudit f = new LaporanAudit();
+            f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            f.setVisible(true);
+        });
+        
         MenuLaporan.add(itemLaporanBulan);
         MenuLaporan.add(itemLaporanPengembalian);
         MenuLaporan.add(itemLaporanBuku);
@@ -457,8 +457,7 @@ public class Dashboard extends JFrame {
         MenuLaporan.add(itemLaporanAuditProperti);
         
         // ======================= 4. LIBRARY AUDIT MENU =======================
-        // ======================= 4. LIBRARY AUDIT MENU =======================
-        JMenuItem itemAuditPropertiMenu = new JMenuItem("Audit Properti"); // Renamed to avoid conflict with itemAuditProperti used in Master Data
+        JMenuItem itemAuditPropertiMenu = new JMenuItem("Audit Properti"); 
         
         itemAuditPropertiMenu.addActionListener(e -> {
             AuditProperti f = new AuditProperti();
@@ -495,6 +494,11 @@ public class Dashboard extends JFrame {
 
         
         itemPengaturanTema.addActionListener(e -> new SelectTheme().setVisible(true));
+        
+        itemPengaturanBackup.addActionListener(e -> {
+            Backup f = new Backup();
+            f.setVisible(true);
+        });
         
         // Settings Listeners
         itemLogout.addActionListener(e -> {

@@ -488,7 +488,8 @@ public class AuditProperti extends JFrame {
     }
 
     private void saveProperti(PropertiData properti) {
-        String sql = "INSERT INTO properti (id_user, nama_barang, status_barang, qty_barang, keterangan) VALUES (?, ?, ?, ?, ?)";
+        // Added tgl_input column to store creation time
+        String sql = "INSERT INTO properti (id_user, nama_barang, status_barang, qty_barang, keterangan, tgl_input) VALUES (?, ?, ?, ?, ?, NOW())";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, properti.getIdUser());
