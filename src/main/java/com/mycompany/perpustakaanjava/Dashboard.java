@@ -490,6 +490,7 @@ public class Dashboard extends JFrame {
         // ======================= 7. SETTINGS MENU =======================
         JMenuItem itemPengaturanTema = new JMenuItem("Tema Windows");
         JMenuItem itemPengaturanBackup = new JMenuItem("Backup Data");
+        JMenuItem itemPengaturanImport = new JMenuItem("Import Data");
         JMenuItem itemLogout = new JMenuItem("Logout");
 
         
@@ -497,6 +498,11 @@ public class Dashboard extends JFrame {
         
         itemPengaturanBackup.addActionListener(e -> {
             Backup f = new Backup();
+            f.setVisible(true);
+        });
+        
+        itemPengaturanImport.addActionListener(e -> {
+            ImportData f = new ImportData();
             f.setVisible(true);
         });
         
@@ -511,6 +517,7 @@ public class Dashboard extends JFrame {
 
         MenuPengaturan.add(itemPengaturanTema);
         MenuPengaturan.add(itemPengaturanBackup);
+        MenuPengaturan.add(itemPengaturanImport);
         MenuPengaturan.addSeparator();
         MenuPengaturan.add(itemLogout);
 

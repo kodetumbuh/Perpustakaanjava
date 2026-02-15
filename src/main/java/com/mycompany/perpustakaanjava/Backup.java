@@ -81,11 +81,24 @@ public class Backup extends JFrame {
         String dbUser = "root";
         String dbPass = "cianjurtea";
 
-        // Command: mysqldump -u root -pcianjurtea -r [path] perpustakaan_v2
-        // Note: -p[password] requires no space
-        // Using List<String> for ProcessBuilder is safer
+        // Find mysqldump
+        String mysqlDumpPath = "mysqldump"; // Default if in PATH
+        File[] possiblePaths = {
+            new File("C:\\Program Files\\MariaDB 11.8\\bin\\mysqldump.exe"),
+            new File("C:\\laragon\\bin\\mysql\\mysql-8.4.3-winx64\\bin\\mysqldump.exe"),
+            new File("C:\\xampp\\mysql\\bin\\mysqldump.exe")
+        };
+
+        for (File p : possiblePaths) {
+            if (p.exists()) {
+                mysqlDumpPath = p.getAbsolutePath();
+                break;
+            }
+        }
+
+        // Command: [path] -u root -pcianjurtea -r [path] perpustakaan_v2
         ProcessBuilder pb = new ProcessBuilder(
-            "mysqldump",
+            mysqlDumpPath,
             "--user=" + dbUser,
             "--password=" + dbPass,
             "--result-file=" + path,

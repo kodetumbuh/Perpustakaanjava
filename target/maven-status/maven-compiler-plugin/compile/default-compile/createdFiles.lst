@@ -11,6 +11,7 @@ com\mycompany\perpustakaanjava\Pengembalian$3.class
 com\mycompany\perpustakaanjava\Anggota$2.class
 com\mycompany\perpustakaanjava\Buku$BukuData.class
 com\mycompany\perpustakaanjava\Pengembalian.class
+com\mycompany\perpustakaanjava\ImportData.class
 com\mycompany\perpustakaanjava\Buku$AutocompleteComboBox.class
 com\mycompany\perpustakaanjava\LaporanAuditBuku.class
 com\mycompany\perpustakaanjava\AuditProperti$UserItem.class
