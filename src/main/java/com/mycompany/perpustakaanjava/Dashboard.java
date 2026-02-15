@@ -321,6 +321,7 @@ public class Dashboard extends JFrame {
         JMenuItem itemPenerbit = new JMenuItem("Penerbit");
         JMenuItem itemPengarang = new JMenuItem("Pengarang");
         JMenuItem itemRak = new JMenuItem("Rak Lemari");
+        JMenuItem itemAuditProperti = new JMenuItem("Audit Properti");
         
         // Master Data Listeners
         itemAnggota.addActionListener(e -> {
@@ -359,12 +360,19 @@ public class Dashboard extends JFrame {
             f.setVisible(true);
         });
         
+        itemAuditProperti.addActionListener(e -> {
+            AuditProperti f = new AuditProperti();
+            f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            f.setVisible(true);
+        });
+        
         MenuDataMaster.add(itemAnggota);
         MenuDataMaster.add(itemBuku);        
         MenuDataMaster.add(itemKategori);
         MenuDataMaster.add(itemPenerbit);
         MenuDataMaster.add(itemPengarang);
         MenuDataMaster.add(itemRak);
+        MenuDataMaster.add(itemAuditProperti);
 
         // ======================= 2. ACTIVITY MENU =======================
         JMenuItem itemPeminjaman = new JMenuItem("Peminjaman Buku");
@@ -449,11 +457,16 @@ public class Dashboard extends JFrame {
         MenuLaporan.add(itemLaporanAuditProperti);
         
         // ======================= 4. LIBRARY AUDIT MENU =======================
-        JMenuItem itemAuditUser = new JMenuItem("Audit User");
-        JMenuItem itemAuditProperti = new JMenuItem("Audit Properti");
+        // ======================= 4. LIBRARY AUDIT MENU =======================
+        JMenuItem itemAuditPropertiMenu = new JMenuItem("Audit Properti"); // Renamed to avoid conflict with itemAuditProperti used in Master Data
         
-        MenuAudit.add(itemAuditUser);
-        MenuAudit.add(itemAuditProperti);
+        itemAuditPropertiMenu.addActionListener(e -> {
+            AuditProperti f = new AuditProperti();
+            f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            f.setVisible(true);
+        });
+        
+        MenuAudit.add(itemAuditPropertiMenu);
         
         // ======================= 6. ADMINISTRATION MENU =======================
         JMenuItem itemAdministrasiAnggota = new JMenuItem("Administrasi Anggota");
