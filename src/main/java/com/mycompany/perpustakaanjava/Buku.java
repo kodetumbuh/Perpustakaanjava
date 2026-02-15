@@ -28,6 +28,7 @@ public class Buku extends JFrame {
     // --- Model Class ---
     public static class BukuData {
         private int idBuku;
+        private String noBarcode;
         private String isbn;
         private String judul;
         private int idPengarang;
@@ -51,12 +52,13 @@ public class Buku extends JFrame {
         public BukuData() {}
 
         // Constructor with all fields
-        public BukuData(int idBuku, String isbn, String judul, int idPengarang, String namaPengarang, 
+        public BukuData(int idBuku, String noBarcode, String isbn, String judul, int idPengarang, String namaPengarang, 
                         int idPenerbit, String namaPenerbit, int idKategori, String namaKategori, 
                         int tahunTerbit, String edisi, int halaman, String bahasa, 
                         int idRak, String lokasiRak, int stokTotal, int stokTersedia, 
                         double harga, java.sql.Date tglMasuk, String status) {
             this.idBuku = idBuku;
+            this.noBarcode = noBarcode;
             this.isbn = isbn;
             this.judul = judul;
             this.idPengarang = idPengarang;
@@ -81,6 +83,9 @@ public class Buku extends JFrame {
         // Getters and Setters
         public int getIdBuku() { return idBuku; }
         public void setIdBuku(int idBuku) { this.idBuku = idBuku; }
+
+        public String getNoBarcode() { return noBarcode; }
+        public void setNoBarcode(String noBarcode) { this.noBarcode = noBarcode; }
 
         public String getIsbn() { return isbn; }
         public void setIsbn(String isbn) { this.isbn = isbn; }
@@ -190,7 +195,7 @@ public class Buku extends JFrame {
 
         // === Table Section ===
         // ID, ISBN, Judul, Pengarang, Penerbit, Kategori, Tahun, Stok, Lokasi Rak
-        String[] columnNames = {"ID", "ISBN", "Judul", "Pengarang", "Penerbit", "Kategori", "Tahun", "Stok Total", "Stok Tersedia", "Lokasi Rak"};
+        String[] columnNames = {"ID", "No Barcode", "ISBN", "Judul", "Pengarang", "Penerbit", "Kategori", "Tahun", "Stok Total", "Stok Tersedia", "Lokasi Rak"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -204,7 +209,7 @@ public class Buku extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int col = table.columnAtPoint(e.getPoint());
-                String[] dbColumns = {"id_buku", "isbn", "judul", "nama_pengarang", "nama_penerbit", "nama_kategori", "tahun_terbit", "stok_total", "stok_tersedia", "lokasi_rak"};
+                String[] dbColumns = {"id_buku", "no_barcode", "isbn", "judul", "nama_pengarang", "nama_penerbit", "nama_kategori", "tahun_terbit", "stok_total", "stok_tersedia", "lokasi_rak"};
 
                 if (col >= 0 && col < dbColumns.length) {
                     String clickedColumn = dbColumns[col];
@@ -328,6 +333,7 @@ public class Buku extends JFrame {
         for (BukuData b : list) {
             tableModel.addRow(new Object[]{
                 b.getIdBuku(),
+                b.getNoBarcode(),
                 b.getIsbn(),
                 b.getJudul(),
                 b.getNamaPengarang(),
@@ -494,6 +500,7 @@ public class Buku extends JFrame {
         dialog.setSize(800, 600);
         dialog.setLocationRelativeTo(this);
 
+        JTextField txtNoBarcode = new JTextField(20);
         JTextField txtISBN = new JTextField(20);
         JTextField txtJudul = new JTextField(20);
         
@@ -520,6 +527,7 @@ public class Buku extends JFrame {
         JComboBox<String> cmbStatus = new JComboBox<>(statusOptions);
 
         if (buku != null) {
+            txtNoBarcode.setText(buku.getNoBarcode() == null ? "" : buku.getNoBarcode());
             txtISBN.setText(buku.getIsbn());
             txtJudul.setText(buku.getJudul());
             
@@ -558,8 +566,10 @@ public class Buku extends JFrame {
         }
 
         // Layout Components
+        dialog.add(new JLabel("No Barcode:"));
+        dialog.add(txtNoBarcode, "growx");
         dialog.add(new JLabel("ISBN:"));
-        dialog.add(txtISBN, "growx");
+        dialog.add(txtISBN, "growx, wrap");
         dialog.add(new JLabel("Judul:"));
         dialog.add(txtJudul, "growx, wrap");
 
@@ -606,6 +616,7 @@ public class Buku extends JFrame {
         JButton btnSave = new JButton("Save");
         btnSave.addActionListener(e -> {
             try {
+                String noBarcode = txtNoBarcode.getText();
                 String isbn = txtISBN.getText();
                 String judul = txtJudul.getText();
                 
@@ -646,7 +657,7 @@ public class Buku extends JFrame {
 
                 BukuData newBuku = new BukuData(
                     (buku == null) ? 0 : buku.getIdBuku(),
-                    isbn, judul, idPengarang, "", idPenerbit, "", idKategori, "",
+                    noBarcode, isbn, judul, idPengarang, "", idPenerbit, "", idKategori, "",
                     tahun, edisi, halaman, bahasa, idRak, "", stokTotal, stokTersedia, harga, tglMasuk, status
                 );
 
@@ -655,6 +666,7 @@ public class Buku extends JFrame {
                     loadData();
 
                     if (chkKeepOpen.isSelected()) {
+                        txtNoBarcode.setText("");
                         txtISBN.setText("");
                         txtJudul.setText("");
                         // Reset ComboBoxes
@@ -692,7 +704,7 @@ public class Buku extends JFrame {
     private List<BukuData> getAllBuku(int limit, int offset, String sortColumn, String sortOrder, String searchKeyword) {
         List<BukuData> list = new ArrayList<>();
 
-        if (!sortColumn.matches("id_buku|isbn|judul|nama_pengarang|nama_penerbit|nama_kategori|tahun_terbit|stok_total|stok_tersedia|lokasi_rak")) {
+        if (!sortColumn.matches("id_buku|no_barcode|isbn|judul|nama_pengarang|nama_penerbit|nama_kategori|tahun_terbit|stok_total|stok_tersedia|lokasi_rak")) {
             sortColumn = "id_buku";
         }
         if (!sortOrder.equalsIgnoreCase("ASC") && !sortOrder.equalsIgnoreCase("DESC")) {
@@ -732,6 +744,7 @@ public class Buku extends JFrame {
                 while (rs.next()) {
                     list.add(new BukuData(
                         rs.getInt("id_buku"),
+                        rs.getString("no_barcode"),
                         rs.getString("isbn"),
                         rs.getString("judul"),
                         rs.getInt("id_pengarang"),
@@ -788,24 +801,25 @@ public class Buku extends JFrame {
     }
 
     private void saveBuku(BukuData buku) {
-        String sql = "INSERT INTO buku (isbn, judul, id_pengarang, id_penerbit, id_kategori, tahun_terbit, edisi, halaman, bahasa, id_rak, stok_total, stok_tersedia, harga, tgl_masuk, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO buku (no_barcode, isbn, judul, id_pengarang, id_penerbit, id_kategori, tahun_terbit, edisi, halaman, bahasa, id_rak, stok_total, stok_tersedia, harga, tgl_masuk, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, buku.getIsbn());
-            pstmt.setString(2, buku.getJudul());
-            pstmt.setInt(3, buku.getIdPengarang());
-            pstmt.setInt(4, buku.getIdPenerbit());
-            pstmt.setInt(5, buku.getIdKategori());
-            pstmt.setInt(6, buku.getTahunTerbit());
-            pstmt.setString(7, buku.getEdisi());
-            pstmt.setInt(8, buku.getHalaman());
-            pstmt.setString(9, buku.getBahasa());
-            pstmt.setInt(10, buku.getIdRak());
-            pstmt.setInt(11, buku.getStokTotal());
-            pstmt.setInt(12, buku.getStokTersedia());
-            pstmt.setDouble(13, buku.getHarga());
-            pstmt.setDate(14, buku.getTglMasuk());
-            pstmt.setString(15, buku.getStatus());
+            pstmt.setString(1, buku.getNoBarcode());
+            pstmt.setString(2, buku.getIsbn());
+            pstmt.setString(3, buku.getJudul());
+            pstmt.setInt(4, buku.getIdPengarang());
+            pstmt.setInt(5, buku.getIdPenerbit());
+            pstmt.setInt(6, buku.getIdKategori());
+            pstmt.setInt(7, buku.getTahunTerbit());
+            pstmt.setString(8, buku.getEdisi());
+            pstmt.setInt(9, buku.getHalaman());
+            pstmt.setString(10, buku.getBahasa());
+            pstmt.setInt(11, buku.getIdRak());
+            pstmt.setInt(12, buku.getStokTotal());
+            pstmt.setInt(13, buku.getStokTersedia());
+            pstmt.setDouble(14, buku.getHarga());
+            pstmt.setDate(15, buku.getTglMasuk());
+            pstmt.setString(16, buku.getStatus());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -814,25 +828,26 @@ public class Buku extends JFrame {
     }
 
     private void updateBuku(BukuData buku) {
-        String sql = "UPDATE buku SET isbn = ?, judul = ?, id_pengarang = ?, id_penerbit = ?, id_kategori = ?, tahun_terbit = ?, edisi = ?, halaman = ?, bahasa = ?, id_rak = ?, stok_total = ?, stok_tersedia = ?, harga = ?, tgl_masuk = ?, status = ? WHERE id_buku = ?";
+        String sql = "UPDATE buku SET no_barcode = ?, isbn = ?, judul = ?, id_pengarang = ?, id_penerbit = ?, id_kategori = ?, tahun_terbit = ?, edisi = ?, halaman = ?, bahasa = ?, id_rak = ?, stok_total = ?, stok_tersedia = ?, harga = ?, tgl_masuk = ?, status = ? WHERE id_buku = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, buku.getIsbn());
-            pstmt.setString(2, buku.getJudul());
-            pstmt.setInt(3, buku.getIdPengarang());
-            pstmt.setInt(4, buku.getIdPenerbit());
-            pstmt.setInt(5, buku.getIdKategori());
-            pstmt.setInt(6, buku.getTahunTerbit());
-            pstmt.setString(7, buku.getEdisi());
-            pstmt.setInt(8, buku.getHalaman());
-            pstmt.setString(9, buku.getBahasa());
-            pstmt.setInt(10, buku.getIdRak());
-            pstmt.setInt(11, buku.getStokTotal());
-            pstmt.setInt(12, buku.getStokTersedia());
-            pstmt.setDouble(13, buku.getHarga());
-            pstmt.setDate(14, buku.getTglMasuk());
-            pstmt.setString(15, buku.getStatus());
-            pstmt.setInt(16, buku.getIdBuku());
+            pstmt.setString(1, buku.getNoBarcode());
+            pstmt.setString(2, buku.getIsbn());
+            pstmt.setString(3, buku.getJudul());
+            pstmt.setInt(4, buku.getIdPengarang());
+            pstmt.setInt(5, buku.getIdPenerbit());
+            pstmt.setInt(6, buku.getIdKategori());
+            pstmt.setInt(7, buku.getTahunTerbit());
+            pstmt.setString(8, buku.getEdisi());
+            pstmt.setInt(9, buku.getHalaman());
+            pstmt.setString(10, buku.getBahasa());
+            pstmt.setInt(11, buku.getIdRak());
+            pstmt.setInt(12, buku.getStokTotal());
+            pstmt.setInt(13, buku.getStokTersedia());
+            pstmt.setDouble(14, buku.getHarga());
+            pstmt.setDate(15, buku.getTglMasuk());
+            pstmt.setString(16, buku.getStatus());
+            pstmt.setInt(17, buku.getIdBuku());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -868,6 +883,7 @@ public class Buku extends JFrame {
                 if (rs.next()) {
                     buku = new BukuData(
                         rs.getInt("id_buku"),
+                        rs.getString("no_barcode"),
                         rs.getString("isbn"),
                         rs.getString("judul"),
                         rs.getInt("id_pengarang"),
