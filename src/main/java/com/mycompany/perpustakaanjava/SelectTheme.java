@@ -13,7 +13,7 @@ public class SelectTheme extends JFrame {
 
     public SelectTheme() {
         setTitle("Pilih Tema Windows");
-        setSize(300, 200);
+        setSize(300, 150);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new MigLayout("insets 20", "[][grow]", "[]20[]"));

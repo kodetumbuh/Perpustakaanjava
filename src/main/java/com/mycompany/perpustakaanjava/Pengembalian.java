@@ -128,6 +128,7 @@ public class Pengembalian extends JFrame {
 
     public Pengembalian() {
         setTitle("Master Pengembalian");
+        setSize(900, 600);
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);

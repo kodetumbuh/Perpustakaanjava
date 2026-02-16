@@ -39,6 +39,7 @@ public class Dashboard extends JFrame {
     public Dashboard() {
         // 1. Auto Full Screen Window Settings (Maximized)
         setTitle("Dashboard Utama - Perpustakaan");
+        setSize(900, 600);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);

@@ -118,6 +118,7 @@ public class Peminjaman extends JFrame {
 
     public Peminjaman() {
         setTitle("Master Peminjaman");
+        setSize(900, 600);
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Changed to DISPOSE to not exit app
         setLocationRelativeTo(null);

@@ -32,7 +32,7 @@ public class LaporanAudit extends JFrame {
 
     private void initUI() {
         setTitle("Laporan Audit Properti");
-        setSize(400, 250);
+        setSize(400, 200);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new MigLayout("insets 20", "[][grow]", "[]10[]20[]"));

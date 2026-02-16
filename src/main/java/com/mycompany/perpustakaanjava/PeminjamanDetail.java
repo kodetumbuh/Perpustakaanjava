@@ -173,6 +173,7 @@ public class PeminjamanDetail extends JFrame {
 
     public PeminjamanDetail() {
         setTitle("Master Peminjaman Detail");
+        setSize(900, 600);
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);

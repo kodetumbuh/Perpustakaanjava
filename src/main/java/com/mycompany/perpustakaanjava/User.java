@@ -89,6 +89,7 @@ public class User extends JFrame {
 
     public User() {
         setTitle("Master User");
+        setSize(900, 600);
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
         setLocationRelativeTo(null);

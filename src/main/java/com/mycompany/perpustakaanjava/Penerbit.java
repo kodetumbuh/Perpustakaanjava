@@ -82,7 +82,7 @@ public class Penerbit extends JFrame {
 
     public Penerbit() {
         setTitle("Master Data Penerbit");
-        // Revert to maximizing as requested implicitly by user context
+        setSize(900, 600);
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
         setLocationRelativeTo(null);

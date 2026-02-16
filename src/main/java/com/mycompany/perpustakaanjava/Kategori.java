@@ -69,8 +69,7 @@ public class Kategori extends JFrame {
 
     public Kategori() {
         setTitle("Master Kategori");
-        // Use standard frame setup, user might want maximization, but standard size is safer for now.
-        // User had setExtendedState(JFrame.MAXIMIZED_BOTH) in the file I read. I will keep it.
+        setSize(900, 600);
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
         setLocationRelativeTo(null);

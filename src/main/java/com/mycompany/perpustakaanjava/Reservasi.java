@@ -95,6 +95,7 @@ public class Reservasi extends JFrame {
 
     public Reservasi() {
         setTitle("Master Reservasi");
+        setSize(900, 600);
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);

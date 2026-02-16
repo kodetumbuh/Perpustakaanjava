@@ -13,7 +13,6 @@ com\mycompany\perpustakaanjava\Buku$BukuData.class
 com\mycompany\perpustakaanjava\Pengembalian.class
 com\mycompany\perpustakaanjava\ImportData.class
 com\mycompany\perpustakaanjava\Buku$AutocompleteComboBox.class
-com\mycompany\perpustakaanjava\LaporanAuditBuku.class
 com\mycompany\perpustakaanjava\AuditProperti$UserItem.class
 com\mycompany\perpustakaanjava\Buku$1.class
 com\mycompany\perpustakaanjava\Dashboard$2.class
