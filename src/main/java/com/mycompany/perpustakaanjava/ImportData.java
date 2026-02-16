@@ -5,21 +5,32 @@ import java.awt.*;
 import java.io.File;
 import net.miginfocom.swing.MigLayout;
 
-public class ImportData extends JFrame {
+public class ImportData extends JDialog {
 
     private JTextField txtPath;
     private JButton btnBrowse;
     private JButton btnImport;
 
-    public ImportData() {
+    public ImportData(Frame parent) {
+        super(parent, "Import Data Perpustakaan", true); // Modal
+        initUI();
+    }
+    
+    public ImportData(Dialog parent) {
+        super(parent, "Import Data Perpustakaan", true); // Modal
         initUI();
     }
 
+    // Default legacy constructor (for main method testing)
+    public ImportData() {
+        this((Frame)null);
+    }
+
     private void initUI() {
-        setTitle("Import Data Perpustakaan");
+        // setTitle handled in super
         setSize(500, 250);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         setLayout(new MigLayout("insets 20", "[grow][]", "[]10[]20[]"));
 
         // Header
@@ -74,7 +85,7 @@ public class ImportData extends JFrame {
         }
 
         int confirm = JOptionPane.showConfirmDialog(this, 
-            "Apakah Anda yakin ingin melakukan Restore Data?\nData saat ini akan HILANG dan digantikan dengan data dari file backup.", 
+            "Apakah Anda yakin ingin melakukan Restore Data?\nData saat ini akan HILANG dan digantikan dengan data dari file backup.\n-Abaikan pesan ini jika anda belum mempunyai data", 
             "Konfirmasi Import", 
             JOptionPane.YES_NO_OPTION,
             JOptionPane.WARNING_MESSAGE);

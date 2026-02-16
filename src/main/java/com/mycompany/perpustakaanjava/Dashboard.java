@@ -493,6 +493,7 @@ public class Dashboard extends JFrame {
         JMenuItem itemPengaturanBackup = new JMenuItem("Backup Data");
         JMenuItem itemPengaturanImport = new JMenuItem("Import Data - Restore");
         JMenuItem itemResetData = new JMenuItem("Reset Data"); // Reset Data
+        JMenuItem itemPengaturanDatabase = new JMenuItem("Konfigurasi Database");
         JMenuItem itemLogout = new JMenuItem("Logout");
 
         
@@ -504,12 +505,17 @@ public class Dashboard extends JFrame {
         });
         
         itemPengaturanImport.addActionListener(e -> {
-            ImportData f = new ImportData();
+            ImportData f = new ImportData(this);
             f.setVisible(true);
         });
         
         itemResetData.addActionListener(e -> {
             ResetData f = new ResetData(this);
+            f.setVisible(true);
+        });
+
+        itemPengaturanDatabase.addActionListener(e -> {
+            SettingDatabase f = new SettingDatabase(this, true);
             f.setVisible(true);
         });
         
@@ -526,6 +532,7 @@ public class Dashboard extends JFrame {
         MenuPengaturan.add(itemPengaturanBackup);
         MenuPengaturan.add(itemPengaturanImport);
         MenuPengaturan.add(itemResetData); // Add to menu
+        MenuPengaturan.add(itemPengaturanDatabase);
         MenuPengaturan.addSeparator();
         MenuPengaturan.add(itemLogout);
 

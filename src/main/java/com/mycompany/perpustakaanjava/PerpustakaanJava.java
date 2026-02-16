@@ -4,6 +4,8 @@
 
 package com.mycompany.perpustakaanjava;
 
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author ZEMS
@@ -30,6 +32,21 @@ public class PerpustakaanJava {
             }
         }
 
+        // Check Database Connection
+        if (!DatabaseConnection.checkConnection()) {
+             // Connection failed or database doesn't exist
+             // Show SettingDatabase dialog
+             final SettingDatabase settings = new SettingDatabase(null, true);
+             settings.setVisible(true);
+             
+             // Re-check after settings closed
+             if (!DatabaseConnection.checkServerConnection()) {
+                 JOptionPane.showMessageDialog(null, "Gagal terhubung ke database. Aplikasi akan ditutup.", "Error", JOptionPane.ERROR_MESSAGE);
+                 System.exit(0);
+             }
+        }
+        
+        // Launch Main App if connection successful
         javax.swing.SwingUtilities.invokeLater(() -> {
             new LoginForm().setVisible(true);
         });
