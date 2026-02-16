@@ -77,28 +77,31 @@ public class Backup extends JFrame {
         }
 
         // Database Credentials
-        String dbName = "perpustakaan_v2";
-        String dbUser = "root";
-        String dbPass = "cianjurtea";
+        // Database Credentials
+        String dbName = DatabaseConnection.DB_NAME;
+        String dbUser = DatabaseConnection.USER;
+        String dbPass = DatabaseConnection.PASSWORD;
 
-        // Find mysqldump
-        String mysqlDumpPath = "mysqldump"; // Default if in PATH
+        // Find mariadb-dump
+        String mariadbDumpPath = "mariadb-dump"; // Default if in PATH
         File[] possiblePaths = {
-            new File("C:\\Program Files\\MariaDB 11.8\\bin\\mysqldump.exe"),
-            new File("C:\\laragon\\bin\\mysql\\mysql-8.4.3-winx64\\bin\\mysqldump.exe"),
-            new File("C:\\xampp\\mysql\\bin\\mysqldump.exe")
+            new File("C:\\Program Files\\MariaDB 11.4\\bin\\mariadb-dump.exe"),
+            new File("C:\\Program Files\\MariaDB 11.8\\bin\\mariadb-dump.exe"),
+            new File("C:\\Program Files\\MariaDB 10.11\\bin\\mariadb-dump.exe"),
+            new File("C:\\xampp\\mysql\\bin\\mariadb-dump.exe"),
+            new File("C:\\Program Files\\MariaDB 11.8\\bin\\mysqldump.exe") // Fallback
         };
 
         for (File p : possiblePaths) {
             if (p.exists()) {
-                mysqlDumpPath = p.getAbsolutePath();
+                mariadbDumpPath = p.getAbsolutePath();
                 break;
             }
         }
 
         // Command: [path] -u root -pcianjurtea -r [path] perpustakaan_v2
         ProcessBuilder pb = new ProcessBuilder(
-            mysqlDumpPath,
+            mariadbDumpPath,
             "--user=" + dbUser,
             "--password=" + dbPass,
             "--result-file=" + path,

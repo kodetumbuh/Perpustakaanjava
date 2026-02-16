@@ -84,62 +84,61 @@ public class ImportData extends JFrame {
         }
 
         // Database Credentials
-        String dbName = "perpustakaan_v2";
-        String dbUser = "root";
-        String dbPass = "cianjurtea";
+        // Database Credentials
+        String dbName = DatabaseConnection.DB_NAME;
+        String dbUser = DatabaseConnection.USER;
+        String dbPass = DatabaseConnection.PASSWORD;
 
-        // Command: mysql -u root -pcianjurtea perpustakaan_v2 < [file]
-        // Note: Java ProcessBuilder doesn't handle '<' redirection directly.
-        // We need to use cmd /c for Windows to handle the redirection.
-        
-        // Find mysql executable
-        String mysqlPath = "mysql"; // Default
+        // Find mariadb executable
+        String mariadbPath = "mariadb"; // Default
+        // Add more common paths if needed
         File[] possiblePaths = {
-            new File("C:\\Program Files\\MariaDB 11.8\\bin\\mysql.exe"),
-            new File("C:\\laragon\\bin\\mysql\\mysql-8.4.3-winx64\\bin\\mysql.exe"),
-            new File("C:\\xampp\\mysql\\bin\\mysql.exe")
+            new File("C:\\Program Files\\MariaDB 11.4\\bin\\mariadb.exe"),
+            new File("C:\\Program Files\\MariaDB 11.8\\bin\\mariadb.exe"),
+            new File("C:\\Program Files\\MariaDB 10.11\\bin\\mariadb.exe"),
+            new File("C:\\xampp\\mysql\\bin\\mariadb.exe"),
+            // Fallback to mysql if mariadb not found but unlikely if user insisted on mariadb
+            new File("C:\\Program Files\\MariaDB 11.8\\bin\\mysql.exe") 
         };
 
         for (File p : possiblePaths) {
             if (p.exists()) {
-                mysqlPath = p.getAbsolutePath();
+                mariadbPath = p.getAbsolutePath();
                 break;
             }
         }
         
-        // Wrap path in quotes if it contains spaces
-        if (mysqlPath.contains(" ")) {
-            mysqlPath = "\"" + mysqlPath + "\"";
-        }
+        // Use ProcessBuilder with direct arguments to avoid Shell/CMD quoting issues
+        java.util.List<String> commands = new java.util.ArrayList<>();
+        commands.add(mariadbPath);
+        commands.add("--user=" + dbUser);
+        commands.add("--password=" + dbPass);
+        commands.add(dbName);
 
-        ProcessBuilder pb;
-        
-        String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("win")) {
-            pb = new ProcessBuilder(
-                "cmd.exe", 
-                "/c", 
-                mysqlPath + " --user=" + dbUser + " --password=" + dbPass + " " + dbName + " < \"" + path + "\""
-            );
-        } else {
-             // Bash for Linux/Mac
-             pb = new ProcessBuilder(
-                "/bin/sh", 
-                "-c", 
-                mysqlPath + " --user=" + dbUser + " --password=" + dbPass + " " + dbName + " < \"" + path + "\""
-            );
-        }
-        
+        ProcessBuilder pb = new ProcessBuilder(commands);
         pb.redirectErrorStream(true);
 
         try {
             Process process = pb.start();
+
+            // Write the SQL file content to the Process OutputStream (STDIN)
+            // This replaces the '<' redirection which is shell-specific
+            try (java.io.OutputStream os = process.getOutputStream();
+                 java.io.FileInputStream fis = new java.io.FileInputStream(path)) {
+                
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    os.write(buffer, 0, bytesRead);
+                }
+                os.flush();
+            }
+
             int exitCode = process.waitFor();
 
             if (exitCode == 0) {
                 JOptionPane.showMessageDialog(this, "Import Data Berhasil! Aplikasi akan restart.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
                 this.dispose();
-                // Ideally, restart app here, but closing is safer to force reload
                 System.exit(0);
             } else {
                 // Read error output

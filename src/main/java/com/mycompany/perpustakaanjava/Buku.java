@@ -25,7 +25,7 @@ import javax.swing.DefaultComboBoxModel;
  */
 public class Buku extends JFrame {
 
-    // --- Model Class ---
+    // --- Model Class 
     public static class BukuData {
         private int idBuku;
         private String noBarcode;
@@ -571,37 +571,36 @@ public class Buku extends JFrame {
         dialog.add(new JLabel("ISBN:"));
         dialog.add(txtISBN, "growx, wrap");
         dialog.add(new JLabel("Judul:"));
-        dialog.add(txtJudul, "growx, wrap");
+        dialog.add(txtJudul, "growx");
 
         dialog.add(new JLabel("Pengarang:"));
-        dialog.add(cmbPengarang, "growx");
+        dialog.add(cmbPengarang, "growx, wrap");
         dialog.add(new JLabel("Penerbit:"));
-        dialog.add(cmbPenerbit, "growx, wrap");
-
+        dialog.add(cmbPenerbit, "growx");
         dialog.add(new JLabel("Kategori:"));
-        dialog.add(cmbKategori, "growx");
+        dialog.add(cmbKategori, "growx, wrap");
         dialog.add(new JLabel("Rak:"));
-        dialog.add(cmbRak, "growx, wrap");
+        dialog.add(cmbRak, "growx");
         
         dialog.add(new JLabel("Tahun Terbit:"));
-        dialog.add(txtTahun, "growx");
+        dialog.add(txtTahun, "growx, wrap");
         dialog.add(new JLabel("Edisi:"));
-        dialog.add(txtEdisi, "growx, wrap");
+        dialog.add(txtEdisi, "growx");
         
         dialog.add(new JLabel("Halaman:"));
-        dialog.add(txtHalaman, "growx");
+        dialog.add(txtHalaman, "growx, wrap");
         dialog.add(new JLabel("Bahasa:"));
-        dialog.add(txtBahasa, "growx, wrap");
+        dialog.add(txtBahasa, "growx");
         
         dialog.add(new JLabel("Stok Total:"));
-        dialog.add(txtStokTotal, "growx");
+        dialog.add(txtStokTotal, "growx, wrap");
         dialog.add(new JLabel("Stok Tersedia:"));
-        dialog.add(txtStokTersedia, "growx, wrap");
+        dialog.add(txtStokTersedia, "growx");
         
         dialog.add(new JLabel("Harga:"));
-        dialog.add(txtHarga, "growx");
+        dialog.add(txtHarga, "growx, wrap");
         dialog.add(new JLabel("Tgl Masuk:"));
-        dialog.add(dateChooser, "growx, wrap");
+        dialog.add(dateChooser, "growx");
         
         dialog.add(new JLabel("Status:"));
         dialog.add(cmbStatus, "growx, wrap");
