@@ -28,15 +28,26 @@ public class ResetData extends JDialog {
 
     private void initUI() {
         setLayout(new MigLayout("fill, insets 20", "[grow]", "[][][][grow]"));
-        setSize(400, 300);
+        setSize(500, 300);
         setLocationRelativeTo(getParent());
 
-        JLabel lblWarning = new JLabel("<html><div style='text-align: center;'><b>WARNING: THIS ACTION IS IRREVERSIBLE!</b><br>All data (books, members, loans, etc.) will be permanently deleted.<br>User accounts will NOT be deleted.</div></html>");
-        lblWarning.setForeground(Color.RED);
-        lblWarning.setHorizontalAlignment(SwingConstants.CENTER);
-        add(lblWarning, "growx, wrap, gapbottom 20");
+        JLabel lblTitle = new JLabel("PERINGATAN: TINDAKAN INI TIDAK DAPAT DIBATALKAN!");
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 12));
+        lblTitle.setForeground(Color.RED);
+        lblTitle.setHorizontalAlignment(SwingConstants.CENTER);
+        add(lblTitle, "growx, wrap, gapbottom 5");
 
-        add(new JLabel("Type '" + CONFIRM_CODE + "' to confirm:"), "wrap");
+        JLabel lblMsg1 = new JLabel("Semua data (buku, anggota, peminjaman, dll) akan dihapus secara permanen.");
+        lblMsg1.setForeground(Color.RED);
+        lblMsg1.setHorizontalAlignment(SwingConstants.CENTER);
+        add(lblMsg1, "growx, wrap");
+        
+        JLabel lblMsg2 = new JLabel("Akun pengguna TIDAK akan dihapus.");
+        lblMsg2.setForeground(Color.RED);
+        lblMsg2.setHorizontalAlignment(SwingConstants.CENTER);
+        add(lblMsg2, "growx, wrap, gapbottom 20");
+
+        add(new JLabel("Ketik '" + CONFIRM_CODE + "' untuk konfirmasi:"), "wrap");
         
         txtConfirm = new JTextField();
         add(txtConfirm, "growx, wrap, gapbottom 20");
@@ -64,17 +75,17 @@ public class ResetData extends JDialog {
 
     private void performReset() {
         int confirm = JOptionPane.showConfirmDialog(this, 
-                "Are you absolutely sure you want to wipe all data?", 
-                "Final Confirmation", 
+                "Apakah Anda yakin ingin menghapus semua data?", 
+                "Konfirmasi Akhir", 
                 JOptionPane.YES_NO_OPTION, 
                 JOptionPane.ERROR_MESSAGE);
 
         if (confirm == JOptionPane.YES_OPTION) {
             if (wipeDatabase()) {
-                JOptionPane.showMessageDialog(this, "Data has been successfully reset.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Data berhasil di-reset.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
                 dispose();
             } else {
-                JOptionPane.showMessageDialog(this, "Failed to reset data. Check logs.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Gagal me-reset data. Cek log.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
