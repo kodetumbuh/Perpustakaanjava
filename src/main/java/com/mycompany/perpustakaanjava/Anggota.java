@@ -152,9 +152,9 @@ public class Anggota extends JFrame {
 
     public Anggota() {
         setTitle("Master Anggota");
-        setMinimumSize(new Dimension(900, 600));
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setSize(900, 600);
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         initUI();
         loadData();

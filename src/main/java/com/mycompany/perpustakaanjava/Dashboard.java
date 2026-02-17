@@ -40,11 +40,7 @@ public class Dashboard extends JFrame {
     public Dashboard() {
         // 1. Auto Full Screen Window Settings (Maximized)
         setTitle("Dashboard Utama - Perpustakaan");
-        setMinimumSize(new Dimension(900, 600));
         
-        // Workaround: Set initial size to max bounds to prevent "jumping" glitch
-        Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
-        setBounds(bounds);
         
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);

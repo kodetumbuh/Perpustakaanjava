@@ -176,7 +176,6 @@ public class PeminjamanDetail extends JFrame {
         setSize(900, 600);
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(null);
 
         initUI();
         loadData();
