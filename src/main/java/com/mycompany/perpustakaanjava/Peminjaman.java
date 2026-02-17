@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.awt.Dimension;
 
 /**
  * Main application frame for managing Peminjaman.
@@ -118,10 +119,9 @@ public class Peminjaman extends JFrame {
 
     public Peminjaman() {
         setTitle("Master Peminjaman");
-        setSize(900, 600);
-        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setMinimumSize(new Dimension(900, 600));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Changed to DISPOSE to not exit app
-        setLocationRelativeTo(null);
+        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         initUI();
         loadData();

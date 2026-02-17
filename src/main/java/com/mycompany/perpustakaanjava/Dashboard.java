@@ -16,6 +16,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import javax.swing.table.DefaultTableModel;
 import java.util.ArrayList;
 import java.util.List;
+import java.awt.Dimension;
 
 public class Dashboard extends JFrame {
 
@@ -39,10 +40,14 @@ public class Dashboard extends JFrame {
     public Dashboard() {
         // 1. Auto Full Screen Window Settings (Maximized)
         setTitle("Dashboard Utama - Perpustakaan");
-        setSize(900, 600);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setMinimumSize(new Dimension(900, 600));
+        
+        // Workaround: Set initial size to max bounds to prevent "jumping" glitch
+        Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        setBounds(bounds);
+        
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         // 2. Initialize Menu Bar
         initMenuBar();

@@ -12,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.awt.Dimension;
 
 /**
  * Main application frame for managing Kategori.
@@ -69,10 +70,9 @@ public class Kategori extends JFrame {
 
     public Kategori() {
         setTitle("Master Kategori");
-        setSize(900, 600);
-        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setMinimumSize(new Dimension(900, 600));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
-        setLocationRelativeTo(null);
+        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         
         initUI();
         loadData();

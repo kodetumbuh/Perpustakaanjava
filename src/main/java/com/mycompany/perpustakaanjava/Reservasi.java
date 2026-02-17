@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.awt.Dimension;
 
 /**
  * Main application frame for managing Reservasi.
@@ -95,10 +96,9 @@ public class Reservasi extends JFrame {
 
     public Reservasi() {
         setTitle("Master Reservasi");
-        setSize(900, 600);
-        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setMinimumSize(new Dimension(900, 600));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(null);
+        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         initUI();
         loadData();

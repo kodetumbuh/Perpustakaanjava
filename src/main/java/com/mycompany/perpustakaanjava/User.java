@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.awt.Dimension;
 
 /**
  * Main application frame for managing User.
@@ -89,10 +90,9 @@ public class User extends JFrame {
 
     public User() {
         setTitle("Master User");
-        setSize(900, 600);
-        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setMinimumSize(new Dimension(900, 600));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); 
-        setLocationRelativeTo(null);
+        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         initUI();
         loadData();
@@ -292,7 +292,7 @@ public class User extends JFrame {
 
         if (user != null) {
             txtUsername.setText(user.getUsername());
-            txtPassword.setText(user.getPassword());
+            // txtPassword.setText(user.getPassword()); // Don't show password hash
             txtNamaLengkap.setText(user.getNamaLengkap());
             txtNoTelepon.setText(user.getNoTelepon());
             cmbRole.setSelectedItem(user.getRole());
@@ -305,7 +305,7 @@ public class User extends JFrame {
         dialog.add(new JLabel("Username:"));
         dialog.add(txtUsername, "wrap, growx");
         
-        dialog.add(new JLabel("Password:"));
+        dialog.add(new JLabel("Password"));
         dialog.add(txtPassword, "wrap, growx");
         
         dialog.add(new JLabel("Nama Lengkap:"));
@@ -326,22 +326,40 @@ public class User extends JFrame {
         JButton btnSave = new JButton("Save");
         btnSave.addActionListener(e -> {
             String username = txtUsername.getText();
-            String password = new String(txtPassword.getPassword()); // Plain text for now
+            String rawPassword = new String(txtPassword.getPassword()); 
             String namaLengkap = txtNamaLengkap.getText();
             String noTelepon = txtNoTelepon.getText();
             String role = (String) cmbRole.getSelectedItem();
             String status = (String) cmbStatus.getSelectedItem();
             Date tglDibuat = dateChooserDibuat.getDate();
 
-            if (username.isEmpty() || password.isEmpty() || namaLengkap.isEmpty()) {
-                JOptionPane.showMessageDialog(dialog, "Please fill in Username, Password, and Nama Lengkap.");
+            if (username.isEmpty() || namaLengkap.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "Please fill in Username and Nama Lengkap.");
                 return;
+            }
+
+            // Password processing
+            String finalPassword = "";
+            if (user == null) {
+                // Creating new user: Password is required
+                if (rawPassword.isEmpty()) {
+                    JOptionPane.showMessageDialog(dialog, "Password is required for new users.");
+                    return;
+                }
+                finalPassword = getMd5(rawPassword);
+            } else {
+                // Editing user
+                if (rawPassword.isEmpty()) {
+                    finalPassword = user.getPassword(); // Keep existing
+                } else {
+                    finalPassword = getMd5(rawPassword); // Update with new hash
+                }
             }
 
             UserData newUser = new UserData(
                 (user == null) ? 0 : user.getIdUser(),
                 username,
-                password,
+                finalPassword,
                 namaLengkap,
                 noTelepon,
                 role,
@@ -505,6 +523,21 @@ public class User extends JFrame {
             e.printStackTrace();
         }
         return user;
+    }
+
+    private String getMd5(String input) {
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            byte[] messageDigest = md.digest(input.getBytes());
+            java.math.BigInteger no = new java.math.BigInteger(1, messageDigest);
+            String hashtext = no.toString(16);
+            while (hashtext.length() < 32) {
+                hashtext = "0" + hashtext;
+            }
+            return hashtext;
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void main(String[] args) {

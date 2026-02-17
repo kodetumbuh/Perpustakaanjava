@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import java.awt.Dimension;
 
 /**
  * Main application frame for managing Pengembalian.
@@ -128,10 +129,9 @@ public class Pengembalian extends JFrame {
 
     public Pengembalian() {
         setTitle("Master Pengembalian");
-        setSize(900, 600);
-        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setMinimumSize(new Dimension(900, 600));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(null);
+        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         initUI();
         loadData();

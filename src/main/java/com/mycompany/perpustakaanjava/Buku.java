@@ -18,6 +18,7 @@ import java.awt.event.KeyEvent;
 import java.util.function.Function;
 import javax.swing.SwingUtilities;
 import javax.swing.DefaultComboBoxModel;
+import java.awt.Dimension;
 
 /**
  * Main application frame for managing Buku.
@@ -165,10 +166,9 @@ public class Buku extends JFrame {
 
     public Buku() {
         setTitle("Master Data Buku");
-        setSize(900, 600);
-        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setMinimumSize(new Dimension(900, 600));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(null);
+        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         initUI();
         loadData();

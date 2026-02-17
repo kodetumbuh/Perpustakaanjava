@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
+import java.awt.Dimension;
 
 /**
  * Main application frame for managing Pengarang.
@@ -78,7 +79,7 @@ public class Pengarang extends JFrame {
 
     public Pengarang() {
         setTitle("Master Data Pengarang");
-        setSize(900, 600);
+        setMinimumSize(new Dimension(900, 600));
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
