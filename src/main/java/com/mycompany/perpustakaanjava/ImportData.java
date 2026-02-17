@@ -10,6 +10,11 @@ public class ImportData extends JDialog {
     private JTextField txtPath;
     private JButton btnBrowse;
     private JButton btnImport;
+    private boolean success = false;
+
+    public boolean isSuccess() {
+        return success;
+    }
 
     public ImportData(Frame parent) {
         super(parent, "Import Data Perpustakaan", true); // Modal
@@ -68,7 +73,7 @@ public class ImportData extends JDialog {
         fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("SQL Backup Files", "sql"));
         
         // Default to Documents
-        fileChooser.setCurrentDirectory(new File(System.getProperty("user.home") + File.separator + "Documents"));
+        fileChooser.setCurrentDirectory(new File(System.getProperty("user.home") + File.separator + "Desktop"));
         
         int userSelection = fileChooser.showOpenDialog(this);
         if (userSelection == JFileChooser.APPROVE_OPTION) {
@@ -148,9 +153,9 @@ public class ImportData extends JDialog {
             int exitCode = process.waitFor();
 
             if (exitCode == 0) {
-                JOptionPane.showMessageDialog(this, "Import Data Berhasil! Aplikasi akan restart.", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Import Data Berhasil!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                this.success = true;
                 this.dispose();
-                System.exit(0);
             } else {
                 // Read error output
                 java.io.InputStream is = process.getInputStream();

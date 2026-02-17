@@ -49,7 +49,7 @@ public class Backup extends JFrame {
         // Default filename
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
         String defaultName = "backup_perpustakaan_" + sdf.format(new Date()) + ".sql";
-        txtPath.setText(System.getProperty("user.home") + File.separator + "Documents" + File.separator + defaultName);
+        txtPath.setText(System.getProperty("user.home") + File.separator + "Desktop" + File.separator + defaultName);
     }
 
     private void chooseFile() {

@@ -161,6 +161,12 @@ public class SettingDatabase extends JDialog {
             int exitCode = process.waitFor();
             if (exitCode == 0) {
                  JOptionPane.showMessageDialog(this, "Database berhasil dibuat dari dump_database.sql!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                 
+                 // If running from startup (parent is null), redirect to Login
+                 if (getParent() == null) {
+                     new LoginForm().setVisible(true);
+                     this.dispose();
+                 }
             } else {
                 java.io.InputStream is = process.getInputStream();
                 java.util.Scanner s = new java.util.Scanner(is).useDelimiter("\\A");
@@ -177,5 +183,14 @@ public class SettingDatabase extends JDialog {
     private void openImportData() {
         ImportData importForm = new ImportData(this);
         importForm.setVisible(true);
+        
+        // Check if import was successful
+        if (importForm.isSuccess()) {
+             // If running from startup (parent is null), redirect to Login
+             if (getParent() == null) {
+                 new LoginForm().setVisible(true);
+                 this.dispose();
+             }
+        }
     }
 }

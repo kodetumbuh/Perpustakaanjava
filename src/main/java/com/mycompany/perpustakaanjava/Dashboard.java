@@ -507,6 +507,11 @@ public class Dashboard extends JFrame {
         itemPengaturanImport.addActionListener(e -> {
             ImportData f = new ImportData(this);
             f.setVisible(true);
+            if (f.isSuccess()) {
+                JOptionPane.showMessageDialog(this, "Data berhasil di-import. Aplikasi akan restart.", "Info", JOptionPane.INFORMATION_MESSAGE);
+                // Restart logic (or just exit for now as previously done)
+                System.exit(0);
+            }
         });
         
         itemResetData.addActionListener(e -> {
